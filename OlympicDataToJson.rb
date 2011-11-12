@@ -228,79 +228,106 @@ class Population
     return (@participants.dup.delete_if {|p| p.polarity_for_theme(theme_no) != pol}).length
   end
 
-  def polarity_count_for_themes
-    return (1..5).map{ |i| polarity_count_for_theme(i)}
+  def polarity_proportion_for_theme(theme_no, pol)
+    return Float((@participants.dup.delete_if {|p| p.polarity_for_theme(theme_no) != pol}).length) / @participants.length
   end
 
-  def polarity_counts_for_theme(theme_no)
-    return [1,0,-1].map{ |pol| (@participants.dup.delete_if {|p| p.polarity_for_theme(theme_no) != pol}).length}
+  def linkage_matrix_entry(t1n,t1v,t2n,t2v)
+    return (@participants.dup.delete_if {|p| p.polarity_for_theme(t1n) != t1v && p.polarity_for_theme(t2n) != t2v}).length
   end
 
-  def polarity_counts_for_themes
-    return (1..5).map{ |i| polarity_counts_for_theme(i)}
+  def full_linkage_matrix
+    matrix = []
+    15.times{matrix << []}
+
+    row = 0
+    (1..5).each do |t1n|
+      [1,0,-1].each do |t1v|
+        (1..5).each do |t2n|
+          [1,0,-1].each do |t2v|
+            matrix[row] << linkage_matrix_entry(t1n,t1v,t2n,t2v)
+          end
+        end
+        row += 1
+      end
+    end
+    return matrix
   end
 end
 
-#CODE
+#Func to get standard json
+def stdjson(p)
+  json = []
+  (1..5).each do |theme|
+    [1, 0, -1].each do |valence|
+      json_obj = {"theme" => theme, "valence" => valence}
 
+      [nil, "young", "mature", "old", "elderly"].each do |ag|
+        if ag.nil?
+          ag_t = 'all'
+        else
+          ag_t = ag
+        end
 
+        [nil, 1, 0].each do |g|
+          if g.nil?
+            g_t = 'both'
+          elsif g == 1
+            g_t = 'male'
+          else
+            g_t = 'female'
+          end
+          json_obj["#{g_t}_#{ag_t}"] = p.filter_gender(g).filter_agegroup(ag).polarity_proportion_for_theme(theme, valence)
+        end
+      end
+      json << json_obj
+    end
+  end
+  return json_obj
+end
 
-# puts participants.inspect
-# puts participants[0].average_for_theme(1)
+#Func to get link matrix json
+def matrixjson(p)
+  json_obj = {}
+  [nil, "young", "mature", "old", "elderly"].each do |ag|
+    if ag.nil?
+      ag_t = 'all'
+    else
+      ag_t = ag
+    end
+
+    [nil, 1, 0].each do |g|
+      if g.nil?
+        g_t = 'both'
+      elsif g == 1
+        g_t = 'male'
+      else
+        g_t = 'female'
+      end
+      json_obj["#{g_t}_#{ag_t}"] = p.filter_gender(g).filter_agegroup(ag).full_linkage_matrix
+    end
+  end
+  return json_obj
+end
+
 p = Population.new
 CSV.foreach("OlympicFutures_UK_Raw.csv", :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
   p.participants << CSVEvaluator.eval_row(row)
-  # break                            
+  # break
 end
 
-
-# puts "#{p.participants.length} Participants"
-# p.participants.each do |participant|
-#   # puts participant.inspect
-# end
-# 
-# men = p.filter_gender(1).participants
-# puts "#{men.length} Male Participants"
-# men.each do |participant|
-#   # puts participant.inspect
-# end
-# 
-# women = p.filter_gender(0).participants
-# puts "#{women.length} Female Participants"
-# women.each do |participant|
-#   # puts participant.inspect
+# Output Matrix data as json
+# m = matrixjson(p)
+# m.each do |d|
+#   puts d[0]
+#   d[1].each do |mr|
+#     puts mr.inspect
+#   end
+#   puts
 # end
 
-
-
-json = []
-
-(1..5).each do |theme|
-  [1, 0, -1].each do |valence|
-    json_obj = {"theme" => theme, "valence" => valence}
-
-    [nil, "young", "mature", "old", "elderly"].each do |ag|
-      if ag.nil?
-        ag_t = 'all'
-      else
-        ag_t = ag
-      end
-
-      [nil, 1, 0].each do |g|
-        if g.nil?
-          g_t = 'both'
-        elsif g == 1
-          g_t = 'male'
-        else
-          g_t = 'female'
-        end
-        json_obj["#{g_t}_#{ag_t}"] = p.filter_gender(g).filter_agegroup(ag).polarity_count_for_theme(theme, valence)
-      end
-    end
-    json << json_obj
-  end
-end
-puts JSON.generate({:dataset => json})
+# puts JSON.generate({:dataset => stdjson(p)})
+puts JSON.generate({:dataset => matrixjson(p)})
 
 
 
