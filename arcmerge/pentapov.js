@@ -29,11 +29,11 @@ var sexes = [
 ];
 
 var ages = [
-    {'age': 'all',         'ageName': 'All Ages'}, 
-    {'age': 'young',     'ageName': '18-29'}, 
-    {'age': 'mature',     'ageName': '30-49'}, 
-    {'age': 'old',         'ageName': '50-65'}, 
-    {'age': 'elderly',     'ageName': '66+'}
+    {'age': 'all',      'ageName': 'All Ages'}, 
+    {'age': 'young',    'ageName': '18-29'}, 
+    {'age': 'mature',   'ageName': '30-49'}, 
+    {'age': 'older',    'ageName': '50-65'}, 
+    {'age': 'elderly',  'ageName': '66+'}
 ];
 
 // Initial Values //////////////////////
@@ -82,38 +82,86 @@ rings.map(function(d,i) {
 
 // Functions to simplify things //////////////////////////////////////////
 
-function get_demographic(){
-    return settings.sex + "_" + settings.age;
+function get_demographic(s, a){
+    return s + "_" + a;
 }
-function get_proportion(tn, v){
+
+function get_proportion(tn, v, s, a){
     total = 0;
     var diag;
     valencies.map(function(v){
         diag = tn*valencies.length + v.val;
-        total += dataset[get_demographic()][diag][diag];
+        total += dataset[get_demographic(s, a)][diag][diag];
     });
-    console.log(dataset);
-    console.log('argh')
-    console.log(v)
-    console.log(tn*valencies.length + v)
-    console.log(tn*valencies.length)
-    count = dataset[get_demographic()][tn*valencies.length + v][tn*valencies.length + v];
+    count = dataset[get_demographic(s, a)][tn*valencies.length + v][tn*valencies.length + v];
     return count / total;
 }
 
-function get_arc_start_position(tn, v){
+function get_arc_start_position(tn, v, s, a){
     offset = 0;
     valencies.map(function(v2){
         if (v2.val < v){
-            offset += get_proportion(tn, v2.val);
+            offset += get_proportion(tn, v2.val, s, a);
         }
     });
     return offset;
 }
 
-function get_arc_end_position(tn, v){
-    return get_arc_start_position(tn, v) + get_proportion(tn, v);
+function get_arc_end_position(tn, v, s, a){
+    return get_arc_start_position(tn, v, s, a) + get_proportion(tn, v, s, a);
 }
+
+// Animations & Controls ///////////////////////////////////////////////////////
+
+function change_age(a) {
+    arcs.transition().duration(1000).attrTween('d', function(d){return arcTween(d, settings.sex, a)}).each("end", function(e){ settings.age = a}); ;
+}
+
+function change_sex(s) {
+    arcs.transition().duration(1000).attrTween('d', function(d){return arcTween(d, s, settings.age)}).each("end", function(e){ settings.sex = s}); ;
+}
+
+// Control Setup
+var controls = d3.select('body')
+  .append('div')
+  .attr('id', 'controls');
+
+// Age controls
+var ageRadio = controls
+    .append('form')
+    .attr('id', 'ageRadio');
+ages.map(function(a) {
+    console.log(a)
+    ageRadio.append('input')
+        .attr('type', 'radio')
+        .attr('name', 'ageRadio')
+        .attr('class', 'ageRadio')
+        .attr('id', a.age + 'AgeRadio')
+        .attr('value', a.age)
+        .attr(a.age == settings.age ? 'checked' : 'ignoreMe', 'true');
+    ageRadio.append('label')
+        .attr('for', a.age + 'AgeRadio')
+        .text(a.ageName);
+});
+$('#ageRadio').buttonset().css('font-size', 10 + 'px').change(function() { change_age($('.ageRadio:checked').val()); });
+
+//Sex controls
+var sexRadio = controls
+  .append('form')
+    .attr('id', 'sexRadio');
+sexes.map(function(s) {
+    sexRadio.append('input')
+        .attr('type', 'radio')
+        .attr('name', 'sexRadio')
+        .attr('class', 'sexRadio')
+        .attr('id', s.sex + 'SexRadio')
+        .attr('value', s.sex)
+        .attr(s.sex == settings.sex ? 'checked' : 'ignoreMe', 'true');
+    sexRadio.append('label')
+        .attr('for', s.sex + 'SexRadio')
+        .text(s.sexName);
+});
+$('#sexRadio').buttonset().css('font-size', 10 + 'px').change(function() { change_sex($('.sexRadio:checked').val()); });
 
 // Load in Data ////////////////////////////////////////////////////////////////
 
@@ -135,8 +183,8 @@ d3.json('data.json', function(json) {
     arc = d3.svg.arc()
         .innerRadius(radius/2)
         .outerRadius(radius*(7/10))
-        .startAngle(function(d) { return get_arc_start_position(d.theme, d.valence) * 2 * Math.PI; })
-        .endAngle(function(d) { return get_arc_end_position(d.theme, d.valence) * 2 * Math.PI; });
+        .startAngle(function(d) { return get_arc_start_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI; })
+        .endAngle(function(d) { return get_arc_end_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI; });
 
     // add an arc for each response
     arcs = ring_group.selectAll('.arc')
@@ -148,108 +196,15 @@ d3.json('data.json', function(json) {
         .enter().append('svg:path')
         .attr('d', arc)
         .attr('fill', function(d, i) {
-            return colorbrewer[rings[d.theme].color][4][3-d.valence]; })
+            return colorbrewer[rings[d.theme].color][4][1+d.valence]; })
         .attr('fill-opacity', .5)
         .attr('stroke', background);
 });
 
-////////////////////////////////////////////////////////////////////////////////
-
-/*
-var chord = d3.layout.chord()
-  .padding(0.05)
-  .matrix(matrix);
-  
-var w = 300;
-var h = 300;
-var r0 = Math.min(w, h) * .41;
-var r1 = r0 * 1.1;
-
-var fill = d3.scale.ordinal()
-    .domain(d3.range(15))
-    .range(colors);
-
-var svg = d3.select("#chart")
-  .append("svg:svg")
-    .attr("width", w)
-    .attr("height", h)
-  .append("svg:g")
-    .attr("transform", "translate(" + w / 2 + "," + h / 2 + ")");
-
-svg.append("svg:g")
-  .selectAll("path")
-    .data(chord.groups)
-  .enter().append("svg:path")
-    .style("fill", function(d) { return fill(d.index); })
-    .style("stroke", function(d) { return fill(d.index); })
-    .attr("d", 
-      d3.svg.arc()
-        .innerRadius(r0)
-        .outerRadius(r1)
-        .startAngle(getStartAngle)
-        .endAngle(getEndAngle))
-    .on("mouseover", fade(-1))
-    .on("mouseout", fade(1));
-
-function getStartAngle(d) {
-  if(d.index % 3 == 0)  
-    return (d.startAngle+0.05);
-  if(d.index % 3 == 1)
-    return d.startAngle;
-  if(d.index % 3 == 2)
-    return (d.startAngle-0.05);
-}
-
-function getEndAngle(d) { 
-  if(d.index % 3 == 0)  
-    return (d.endAngle+0.05);
-  if(d.index % 3 == 1)
-    return d.endAngle;
-  if(d.index % 3 == 2)
-    return (d.endAngle-0.05);
-}
-
-var ticks = svg.append("svg:g")
-  .selectAll("g")
-    .data(chord.groups)
-  .enter().append("svg:g")
-  .selectAll("g")
-    .data(groupTicks)
-  .enter().append("svg:g")
-    .attr("transform", function(d) {
-      return "rotate(" + (d.angle * 180 / Math.PI - 90) + ")"
-          + "translate(" + r1 + ",0)";
-    });
-
-svg.append("svg:g")
-    .attr("class", "chord")
-  .selectAll("path")
-    .data(chord.chords)
-  .enter().append("svg:path")
-    .style("fill", function(d) { return fill(d.target.index); })
-    .attr("d", d3.svg.chord().radius(r0).startAngle(getStartAngle).endAngle(getEndAngle))
-    .style("opacity", 1);
-*/
-
-/** Returns an array of tick angles and labels, given a group. */
-function groupTicks(d) {
-  var k = (d.endAngle - d.startAngle) / d.value;
-  return d3.range(0, d.value, 1000).map(function(v, i) {
-    return {
-      angle: v * k + d.startAngle,
-      label: i % 5 ? null : v / 1000 + "k"
+function arcTween(d, s, a) {
+    var iS = d3.interpolate(get_arc_start_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI, get_arc_start_position(d.theme, d.valence, s, a) * 2 * Math.PI);
+    var iE = d3.interpolate(get_arc_end_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI, get_arc_end_position(d.theme, d.valence, s, a) * 2 * Math.PI);
+    return function(t) {
+        return arc.startAngle(iS(t)).endAngle(iE(t))();
     };
-  });
-}
-
-/** Returns an event handler for fading a given chord group. */
-function fade(opacity) {
-  return function(g, i) {
-    svg.selectAll("g.chord path")
-        .filter(function(d) {
-          return d.source.index != i && d.target.index != i;
-        })
-      .transition()
-        .style("opacity", opacity);
-  };
-}
+};
