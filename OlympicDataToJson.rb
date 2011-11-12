@@ -174,10 +174,6 @@ class Participant
     return @themes[theme_no].mean
   end
 
-  def average_for_themes
-    return (1..5).map{ |i| average_for_theme(i)}
-  end
-
   def polarity_for_theme(theme_no)
     t_avg = average_for_theme theme_no
     if t_avg < 0.4
@@ -224,15 +220,8 @@ class Population
     end
   end
 
-  def polarity_count_for_theme(theme_no, pol)
-    return (@participants.dup.delete_if {|p| p.polarity_for_theme(theme_no) != pol}).length
-  end
-
-  def polarity_proportion_for_theme(theme_no, pol)
-    return Float((@participants.dup.delete_if {|p| p.polarity_for_theme(theme_no) != pol}).length) / @participants.length
-  end
-
   def linkage_matrix_entry(t1n,t1v,t2n,t2v)
+    # return 0 if t1n == t2n
     return (@participants.dup.delete_if {|p| p.polarity_for_theme(t1n) != t1v && p.polarity_for_theme(t2n) != t2v}).length
   end
 
@@ -255,40 +244,10 @@ class Population
   end
 end
 
-#Func to get standard json
-def stdjson(p)
-  json = []
-  (1..5).each do |theme|
-    [0, 1, 2].each do |valence|
-      json_obj = {"theme" => theme, "valence" => valence}
-      [nil, "young", "mature", "older", "elderly"].each do |ag|
-        if ag.nil?
-          ag_t = 'all'
-        else
-          ag_t = ag
-        end
-
-        [nil, 1, 0].each do |g|
-          if g.nil?
-            g_t = 'both'
-          elsif g == 1
-            g_t = 'male'
-          else
-            g_t = 'female'
-          end
-          json_obj["#{g_t}_#{ag_t}"] = p.filter_gender(g).filter_agegroup(ag).polarity_proportion_for_theme(theme, valence)
-        end
-      end
-      json << json_obj
-    end
-  end
-  return json
-end
-
 #Func to get link matrix json
 def matrixjson(p)
   json_obj = {}
-  [nil, "young", "mature", "old", "elderly"].each do |ag|
+  [nil, "young", "mature", "older", "elderly"].each do |ag|
     if ag.nil?
       ag_t = 'all'
     else
@@ -310,23 +269,33 @@ def matrixjson(p)
 end
 
 p = Population.new
+index = 0
 CSV.foreach("OlympicFutures_UK_Raw.csv", :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
   p.participants << CSVEvaluator.eval_row(row)
-  # break
+  index += 1
+  # break if index == 10
 end
 
-# Output Matrix data as json
-# m = matrixjson(p)
-# m.each do |d|
-#   puts d[0]
-#   d[1].each do |mr|
-#     puts mr.inspect
-#   end
-#   puts
-# end
+#Output Matrix data as json
+def output_matrices(p)
+  m = matrixjson(p)
+  m.each do |d|
+    puts d[0]
+    d[1].each do |mr|
+      mr.each do |c|
+        print "#{c}#{c.to_s == " " || c < 10 ? ' ' : ''} "
+      end
+      puts
+    end
+    puts
+  end
+end
 
-puts JSON.generate({:dataset => stdjson(p)})
-# puts JSON.generate({:dataset => matrixjson(p)})
+puts p.participants.length
+output_matrices(p)
+
+# puts JSON.generate({:dataset => stdjson(p)})
+puts JSON.generate({:dataset => matrixjson(p)})
 
 
 
