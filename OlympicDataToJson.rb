@@ -181,11 +181,11 @@ class Participant
   def polarity_for_theme(theme_no)
     t_avg = average_for_theme theme_no
     if t_avg < 0.4
-      return -1
-    elsif t_avg < 0.6
       return 0
-    else
+    elsif t_avg < 0.6
       return 1
+    else
+      return 2
     end
   end
 
@@ -242,9 +242,9 @@ class Population
 
     row = 0
     (1..5).each do |t1n|
-      [1,0,-1].each do |t1v|
+      [0, 1, 2].each do |t1v|
         (1..5).each do |t2n|
-          [1,0,-1].each do |t2v|
+          [0, 1, 2].each do |t2v|
             matrix[row] << linkage_matrix_entry(t1n,t1v,t2n,t2v)
           end
         end
@@ -259,7 +259,7 @@ end
 def stdjson(p)
   json = []
   (1..5).each do |theme|
-    [1, 0, -1].each do |valence|
+    [0, 1, 2].each do |valence|
       json_obj = {"theme" => theme, "valence" => valence}
       [nil, "young", "mature", "older", "elderly"].each do |ag|
         if ag.nil?
