@@ -5,6 +5,7 @@
     <title>Olympic Viz</title>
     <script type='text/javascript' src='../colorbrewer.js'></script>
     <script type='text/javascript' src='../d3/d3.js'></script>
+    <script type='text/javascript' src='../d3/d3.csv.js'></script>
 	<script type='text/javascript' src='jquery/jquery-1.5.1.js'></script>
     <script type='text/javascript' src='jquery/ui/jquery.ui.core.js'></script>
     <script type='text/javascript' src='jquery/ui/jquery.ui.widget.js'></script>
@@ -45,7 +46,7 @@
 		var chartW = 1000,
 			chartH = chartW/2,
 			radius = chartW/6,
-			background = 'black';
+			background = 'white';
 	
 	// main svg for the chart
 		var chart = d3.select('body')
@@ -53,8 +54,7 @@
 		  .append('svg:svg')
 			.attr('id', 'chart')
 			.attr('width', chartW)
-			.attr('height', chartH)
-			.attr('color', background);
+			.attr('height', chartH);
 	
 	// div for controls
 		var controls = d3.select('body')
