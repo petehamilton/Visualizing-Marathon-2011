@@ -262,7 +262,7 @@ def stdjson(p)
     [1, 0, -1].each do |valence|
       json_obj = {"theme" => theme, "valence" => valence}
 
-      [nil, "young", "mature", "old", "elderly"].each do |ag|
+      [nil, "young", "mature", "older", "elderly"].each do |ag|
         if ag.nil?
           ag_t = 'all'
         else
