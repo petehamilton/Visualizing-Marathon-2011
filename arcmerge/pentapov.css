@@ -1,9 +1,16 @@
 #chart {
-  font: 10px sans-serif;
+    font: 10px sans-serif;
 }
 
 .chord path {
-  fill-opacity: .67;
-  stroke: #000;
-  stroke-width: .5px;
+    fill-opacity: .67;
+    stroke: #000;
+    stroke-width: .5px;
+}
+
+body {
+    font-family:'Segoe UI', Arial, sans-serif;
+    text-anchor: middle;
+    alignment-baseline: middle;
+    font-size:11pt;
 }

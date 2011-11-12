@@ -9,11 +9,11 @@ var colors = [
 
 //Theme names
 var themes = [
-    {theme: 1, name: 'Personal Well-Being', ring: 0},
-    {theme: 2, name: 'Environment', ring: 1},
-    {theme: 3, name: 'Emotions', ring: 2},
-    {theme: 4, name: 'Technology/Economy', ring: 3},
-    {theme: 5, name: 'Legacy', ring: 4}
+    'Personal Well-Being',
+    'Environment',
+    'Emotions',
+    'Technology/Economy',
+    'Legacy'
 ]
 
 var valencies = [
@@ -40,18 +40,15 @@ var ages = [
 
 var settings = {
     sex: 'both',
-    age: 'all'
+    age: 'all',
+    formation: 'logo'
 }
-
-//Maps theme number to ring number
-var ring_lookup = {};
-themes.map(function(d) { ring_lookup[d.theme] = d.ring; });
 
 // Layout & Page controls //////////////////////////////////////////////////////
 
 // various spacing parameters
-var chartW      = 1000;
-var chartH      = chartW / 2;
+var chartW      = 600;
+var chartH      = 600;
 var radius      = chartW / 6;
 var background  = 'white';
 
@@ -111,17 +108,102 @@ function get_arc_end_position(tn, v, s, a){
     return get_arc_start_position(tn, v, s, a) + get_proportion(tn, v, s, a);
 }
 
-// Animations & Controls ///////////////////////////////////////////////////////
+// Animation functions ////////////////////////////////////////////////////////
 
 function change_age(a) {
-    arcs.transition().duration(1000).attrTween('d', function(d){return arcTween(d, settings.sex, a)}).each("end", function(e){ settings.age = a}); ;
+    arcs.transition().duration(1000).attrTween('d', function(d){return arc_tween(d, settings.sex, a)}).each("end", function(e){ settings.age = a});
 }
 
 function change_sex(s) {
-    arcs.transition().duration(1000).attrTween('d', function(d){return arcTween(d, s, settings.age)}).each("end", function(e){ settings.sex = s}); ;
+    arcs.transition().duration(1000).attrTween('d', function(d){return arc_tween(d, s, settings.age)}).each("end", function(e){ settings.sex = s});
 }
 
-// Control Setup
+function arc_tween(d, s, a) {
+    var iS = d3.interpolate(get_arc_start_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI, get_arc_start_position(d.theme, d.valence, s, a) * 2 * Math.PI);
+    var iE = d3.interpolate(get_arc_end_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI, get_arc_end_position(d.theme, d.valence, s, a) * 2 * Math.PI);
+    return function(t) {
+        return arc.startAngle(iS(t)).endAngle(iE(t))();
+    };
+};
+
+
+function get_formation_translation(ring, formation){
+    console.log("Ring: " + ring + " to " + formation);
+    switch(formation){
+        case "pentagram":
+            //TODO - do clever things with me
+            switch(ring) {
+                case 0: return 'translate(' + ((3*radius) - (Math.cos(Math.PI/10)*2*radius)) + ',' + ((3*radius) - (Math.sin(Math.PI/10)*2*radius)) + ')'; break;
+                case 1: return 'translate(' + ((3*radius) - (Math.sin(Math.PI/5)*2*radius)) + ',' + ((3*radius) + (Math.cos(Math.PI/5)*2*radius)) + ')'; break;
+                case 2: return 'translate(' + (3*radius) + ',' + radius + ')'; break;
+                case 3: return 'translate(' + ((3*radius) + (Math.sin(Math.PI/5)*2*radius)) + ',' + ((3*radius) + (Math.cos(Math.PI/5)*2*radius)) + ')'; break;
+                case 4: return 'translate(' + ((3*radius) + (Math.cos(Math.PI/10)*2*radius)) + ',' + ((3*radius) - (Math.sin(Math.PI/10)*2*radius)) + ')'; break;
+            };
+            break;
+        case "merged":
+            return 'translate(' + (3*radius) + ',' + (3*radius) + ')';
+            break;
+        default: //logo
+            return 'translate(' + rings[ring].x + ',' + rings[ring].y + ')';
+            break;
+    }
+}
+
+// reposition circles
+function change_formation(new_formation) {
+    // move gs
+    ring_group.transition().duration(1000)
+        .attrTween('transform', function(d) { return group_tween(d, new_formation); }).each("end", function(e){ settings.formation = new_formation});
+    change_radius(new_formation);
+}
+
+function group_tween(ring, new_formation) {
+    var i = d3.interpolate(get_formation_translation(ring, settings.formation), get_formation_translation(ring, new_formation));
+    return function(t) { return i(t); }
+}
+
+// donut imploder/exploder
+function tween_radius(d, direction) {
+    var arc_start = get_arc_start_position(d.theme, d.valence, settings.sex, settings.age);
+    var arc_end = get_arc_end_position(d.theme, d.valence, settings.sex, settings.age);
+    var implodedS = arc_start * 2 * Math.PI,
+        implodedE = arc_end * 2 * Math.PI,
+        explodedS = ((d.theme-.5)*(2/5)*Math.PI) + arc_start * (2/5) * Math.PI,
+        explodedE = ((d.theme-.5)*(2/5)*Math.PI) + arc_end * (2/5) * Math.PI,
+        implodedIR = radius / 2,
+        implodedOR = radius * (7/10),
+        explodedIR = 3*radius*(4/5),
+        explodedOR = 3*radius;
+    if (direction == 'explode') {
+        var iS = d3.interpolate(implodedS, explodedS),
+            iE = d3.interpolate(implodedE, explodedE),
+            iIR = d3.interpolate(implodedIR, explodedIR),
+            iOR = d3.interpolate(implodedOR, explodedOR);
+    }
+    else if (direction == 'implode') {
+        var iS = d3.interpolate(explodedS, implodedS),
+            iE = d3.interpolate(explodedE, implodedE),
+            iIR = d3.interpolate(explodedIR, implodedIR);
+            iOR = d3.interpolate(explodedOR, implodedOR);
+    }
+  return function(t) {
+    return arc.startAngle(iS(t)).endAngle(iE(t)).innerRadius(iIR(t)).outerRadius(iOR(t))();
+  };
+}
+
+// explode the circles
+function change_radius(formation) {
+    if(settings.formation == "merged" && formation != "merged"){
+        arcs.transition().duration(1000)
+            .attrTween('d', function(d,i) { return tween_radius(d, "implode"); });
+    }
+    if(settings.formation != "merged" && formation == "merged"){
+        arcs.transition().duration(1000)
+            .attrTween('d', function(d,i) { return tween_radius(d, "explode"); });
+    }
+}
+
+// Controls ////////////////////////////////////////////////////////////////////
 var controls = d3.select('body')
   .append('div')
   .attr('id', 'controls');
@@ -131,7 +213,6 @@ var ageRadio = controls
     .append('form')
     .attr('id', 'ageRadio');
 ages.map(function(a) {
-    console.log(a)
     ageRadio.append('input')
         .attr('type', 'radio')
         .attr('name', 'ageRadio')
@@ -177,8 +258,13 @@ d3.json('data.json', function(json) {
         .data(d3.range(themes.length))// Theoretically should be values of each theme
         .enter().append('svg:g')
         .attr('class', 'ring_group')
-        .attr('transform', function(d) { return 'translate(' + rings[d].x + ',' + rings[d].y + ')'; } );
+        .attr('transform', function(d) { return get_formation_translation(d, settings.formation)} );
     
+    // add the title for each ring
+    ring_labels = ring_group
+      .append('svg:text')
+        .text(function(d) { return themes[d]; });
+            
     // arc generator
     arc = d3.svg.arc()
         .innerRadius(radius/2)
@@ -200,11 +286,3 @@ d3.json('data.json', function(json) {
         .attr('fill-opacity', .5)
         .attr('stroke', background);
 });
-
-function arcTween(d, s, a) {
-    var iS = d3.interpolate(get_arc_start_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI, get_arc_start_position(d.theme, d.valence, s, a) * 2 * Math.PI);
-    var iE = d3.interpolate(get_arc_end_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI, get_arc_end_position(d.theme, d.valence, s, a) * 2 * Math.PI);
-    return function(t) {
-        return arc.startAngle(iS(t)).endAngle(iE(t))();
-    };
-};
