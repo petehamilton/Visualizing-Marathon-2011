@@ -166,8 +166,8 @@ class Participant
 
   def initialize(themes, gender, age)
     @themes = themes
-    @gender = gender
-    @age = age
+    @gender = gender.to_i
+    @age = age.to_i
   end
 
   def average_for_theme(theme_no)
@@ -220,7 +220,7 @@ class Population
     when 'elderly'
       return filter_age(66)
     else
-      return @participants.dup
+      return Population.new(@participants.dup)
     end
   end
 
@@ -275,35 +275,32 @@ end
 
 json = []
 
-(1..5).each do |theme_no|
+(1..5).each do |theme|
   [1, 0, -1].each do |valence|
-    json_obj = {"theme" => theme_no, "valence" => valence}
-    [nil, 1, 0].each do |g|
-      
-      if g.nil?
-        g_t = 'both'
-      elsif g == 1
-        g_t = 'male'
+    json_obj = {"theme" => theme, "valence" => valence}
+
+    [nil, "young", "mature", "old", "elderly"].each do |ag|
+      if ag.nil?
+        ag_t = 'all'
       else
-        g_t = 'female'
+        ag_t = ag
       end
-      
-      [nil, "young", "mature", "old", "elderly"].each do |ag|
-        
-        if ag.nil?
-          ag_t = 'all'
-          ag_t = ag
+
+      [nil, 1, 0].each do |g|
+        if g.nil?
+          g_t = 'both'
+        elsif g == 1
+          g_t = 'male'
+        else
+          g_t = 'female'
         end
-        
-        json_obj["#{g_t}_#{ag_t}"] = 0#p.filter_gender(g).filter_agegroup(ag).
+        json_obj["#{g_t}_#{ag_t}"] = p.filter_gender(g).filter_agegroup(ag).polarity_count_for_theme(theme, valence)
       end
     end
     json << json_obj
   end
 end
-ap "Hello"
-ap json
-# ap JSON.generate({:dataset => bigassjson})
+puts JSON.generate({:dataset => json})
 
 
 
