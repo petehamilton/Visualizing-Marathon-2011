@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv='Content-Type' content='text/html;charset=utf-8'>
+    <title>Olympic Viz</title>
+    <script type='text/javascript' src='../colorbrewer.js'></script>
+    <script type='text/javascript' src='../d3/d3.js'></script>
+	<script type='text/javascript' src='jquery/jquery-1.5.1.js'></script>
+    <script type='text/javascript' src='jquery/ui/jquery.ui.core.js'></script>
+    <script type='text/javascript' src='jquery/ui/jquery.ui.widget.js'></script>
+    <script type='text/javascript' src='jquery/ui/jquery.ui.mouse.js'></script>
+    <script type='text/javascript' src='jquery/ui/jquery.ui.button.js'></script>
+    <script type='text/javascript' src='jquery/ui/jquery.ui.slider.js'></script>
+    <script type='text/javascript' src='jquery/ui/jquery.ui.selectmenu.js'></script>
+	<script type='text/javascript' src='jquery/plugins/poshytip/jquery.poshytip.min.js'></script>
+	<link type='text/css' href='jquery/plugins/poshytip/tip-twitter/tip-twitter.css' rel='stylesheet' /> 
+	<link type='text/css' href='jquery/themes/base/jquery.ui.all.css' rel='stylesheet' /> 
+	<link type='text/css' href='jquery/themes/base/jquery.ui.selectmenu.css' rel='stylesheet' /> 
+	<style type='text/css'> body { font-family:'Segoe UI', Arial, sans-serif; text-anchor: middle; alignment-baseline: middle; font-size:11pt; } </style>
+  </head>
+  <body>
+    <script type='text/javascript'>
+
+// default values
+	var sex = 'both',
+		age = 'all';
+		//loc = 'all';
+
+// store the previous state as well to enable tweening
+	var prevSex = sex,
+		prevAge = age;
+
+// description of themes
+	var themes = [	{theme: 1, name: 'Personal Well-Being', ring: 0},
+					{theme: 2, name: 'Environment', ring: 1},
+					{theme: 3, name: 'Emotions', ring: 2},
+					{theme: 4, name: 'Technology/Economy', ring: 3},
+					{theme: 5, name: 'Legacy', ring: 4}
+				 ]
+	var ringLookup = {};
+	themes.map(function(d) { ringLookup[d.theme] = d.ring; });
+
+// layout the page/controls
+	// various spacing parameters
+		var chartW = 1000,
+			chartH = chartW/2,
+			radius = chartW/6,
+			background = 'black';
+	
+	// main svg for the chart
+		var chart = d3.select('body')
+		  .append('div')
+		  .append('svg:svg')
+			.attr('id', 'chart')
+			.attr('width', chartW)
+			.attr('height', chartH)
+			.attr('color', background);
+	
+	// div for controls
+		var controls = d3.select('body')
+		  .append('div')
+			.attr('id', 'controls');
+	
+	// gender selector
+		var sexes = [	{'sex': 'both', 'sexName': 'Both'}, 
+						{'sex': 'male', 'sexName': 'Male'}, 
+						{'sex': 'female', 'sexName': 'Female'}
+					];
+		var sexRadio = controls
+		  .append('form')
+		    .attr('id', 'sexRadio');
+		sexes.map(function(s) {
+			sexRadio.append('input')
+				.attr('type', 'radio')
+				.attr('name', 'sexRadio')
+				.attr('class', 'sexRadio')
+				.attr('id', s.sex + 'SexRadio')
+				.attr('value', s.sex)
+				.attr(s.sex == sex ? 'checked' : 'ignoreMe', 'true');
+			sexRadio.append('label')
+				.attr('for', s.sex + 'SexRadio')
+				.text(s.sexName);
+		});
+		$('#sexRadio').buttonset().css('font-size', 10 + 'px').change(function() { changeSex($('.sexRadio:checked').val()); });
+		function changeSex(s) {
+			prevSex = sex;
+			prevAge = age;
+			sex = s;
+			arcs.transition().duration(1000).attrTween('d', arcTween);
+		}
+	
+	// age selector
+		var ages = 	[	{'age': 'all', 		'ageName': 'All Ages'}, 
+						{'age': 'young', 	'ageName': '18-29'}, 
+						{'age': 'mature', 	'ageName': '30-49'}, 
+						{'age': 'old', 		'ageName': '50-65'}, 
+						{'age': 'elderly', 	'ageName': '66+'}
+					];
+		var ageRadio = controls
+		  .append('form')
+		    .attr('id', 'ageRadio');
+		ages.map(function(a) {
+			ageRadio.append('input')
+				.attr('type', 'radio')
+				.attr('name', 'ageRadio')
+				.attr('class', 'ageRadio')
+				.attr('id', a.age + 'AgeRadio')
+				.attr('value', a.age)
+				.attr(a.age == age ? 'checked' : 'ignoreMe', 'true');
+			ageRadio.append('label')
+				.attr('for', a.age + 'AgeRadio')
+				.text(a.ageName);
+		});
+		$('#ageRadio').buttonset().css('font-size', 10 + 'px').change(function() { changeAge($('.ageRadio:checked').val()); });
+		function changeAge(a) {
+			prevAge = age;
+			prevSex = sex;
+			age = a;
+			arcs.transition().duration(1000).attrTween('d', arcTween);
+		}
+
+/*	// loc selector
+		var locs = [{'loc': 'all', 'locName': 'National'}, {'loc': 'london', 'locName': 'London'}, {'loc': 'other', 'locName': 'Rest of England'}];
+		var locRadio = controls
+		  .append('form')
+		    .attr('id', 'locRadio');
+		locs.map(function(l) {
+			locRadio.append('input')
+				.attr('type', 'radio')
+				.attr('name', 'locRadio')
+				.attr('id', l.loc + 'LocRadio')
+				.attr('value', l.loc)
+				.attr(l.loc == loc ? 'checked' : 'ignoreMe', 'true')
+				.attr('onclick', 'changeLoc(this.value)');
+			locRadio.append('label')
+				.attr('for', l.loc + 'LocRadio')
+				.text(l.locName);
+		});
+		$('#locRadio').buttonset().css('font-size', 10 + 'px').change(function() { changeLoc($('.locRadio:checked').val()); });
+		function changeLoc(l) {
+			loc = l;
+			arcs.transition().duration(500).attr('d', arc);
+		}
+*/
+// ring details
+	var rings = [	{ring: 0, color: 'Blues'}, 
+					{ring: 1, color: 'YlOrRd'},
+					{ring: 2, color: 'Greys'},
+					{ring: 3, color: 'Greens'}, 
+					{ring: 4, color: 'Reds'}];
+	rings.map(function(d,i) {
+		rings[i]['x'] = (i+1)*radius;
+		rings[i]['y'] = ((i%2)+1)*radius;
+	})
+
+// load in Olympic data
+	d3.json('data.json', function(json) {
+	
+	// save data
+		data = json['dataset'];
+	
+	// nest by theme
+		nest = d3.nest()
+			.key(function(d) { return d.theme; })
+			.entries(data);
+	
+	// find start and end angles for each arc
+		nest.map(function(d,i) {
+			ages.map(function(a) {
+				sexes.map(function(s) {
+						var start = 0,
+							end = 0;
+						d.values.map(function(e,j) {
+							end += parseFloat(e[s.sex + '_' + a.age]);
+							nest[i].values[j]['start_' + s.sex + '_' + a.age] = start;
+							nest[i].values[j]['end_' + s.sex + '_' + a.age] = end;
+							start += parseFloat(e[s.sex + '_' + a.age]);
+							nest[i].values[j]['ring'] = ringLookup[e.theme];
+						});					
+					})
+				})
+			})
+	
+	// make an svg:g for each ring
+		ringG = chart.selectAll('.ringG')
+			.data(nest)
+		  .enter().append('svg:g')
+			.attr('class', 'ringG')
+			.attr('transform', function(d,i) { return 'translate(' + rings[i].x + ',' + rings[i].y + ')'; } );
+	// arc generator
+		arc = d3.svg.arc()
+			.innerRadius(radius/2)
+			.outerRadius(radius*(7/10))
+			.startAngle(function(d) { return d['start_' + sex + '_' + age] * 2 * Math.PI; })
+			.endAngle(function(d) { return d['end_' + sex + '_' + age] * 2 * Math.PI; });
+
+	// add an arc for each response
+		arcs = ringG.selectAll('.arc')
+			.data(function(d) { return d.values; })
+		  .enter().append('svg:path')
+			.attr('d', arc)
+			.attr('fill', function(d,i) { return colorbrewer[rings[d.ring].color][4][3-i]; })
+			.attr('fill-opacity', .5)
+			.attr('stroke', background);
+	
+	
+	});
+
+// tween arc transitions
+	function arcTween(d) {
+	  var iS = d3.interpolate(d['start_' + prevSex + '_' + prevAge] * 2 * Math.PI, d['start_' + sex + '_' + age] * 2 * Math.PI);
+	  var iE = d3.interpolate(d['end_' + prevSex + '_' + prevAge] * 2 * Math.PI, d['end_' + sex + '_' + age] * 2 * Math.PI);
+	  return function(t) {
+		return arc.startAngle(iS(t)).endAngle(iE(t))();
+	  };
+	};
+	
+	
+
+	</script>
+  </body>
+</html>
