@@ -261,7 +261,6 @@ def stdjson(p)
   (1..5).each do |theme|
     [1, 0, -1].each do |valence|
       json_obj = {"theme" => theme, "valence" => valence}
-
       [nil, "young", "mature", "older", "elderly"].each do |ag|
         if ag.nil?
           ag_t = 'all'
@@ -283,7 +282,7 @@ def stdjson(p)
       json << json_obj
     end
   end
-  return json_obj
+  return json
 end
 
 #Func to get link matrix json
@@ -326,8 +325,8 @@ end
 #   puts
 # end
 
-# puts JSON.generate({:dataset => stdjson(p)})
-puts JSON.generate({:dataset => matrixjson(p)})
+puts JSON.generate({:dataset => stdjson(p)})
+# puts JSON.generate({:dataset => matrixjson(p)})
 
 
 
