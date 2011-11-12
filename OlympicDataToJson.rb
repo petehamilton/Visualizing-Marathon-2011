@@ -201,15 +201,15 @@ class Population
     @participants = p
   end
 
-  def filter_gender(gender)
-    return Population.new(@participants.dup.delete_if {|p| p.gender != gender})
+  def filter_gender(gender = nil)
+    return Population.new(@participants.dup.delete_if {|p| p.gender != gender && gender != nil})
   end
 
   def filter_age(min = 18, max = 100)
     return Population.new(@participants.dup.delete_if {|p| p.age < min || p.age > max})
   end
 
-  def filter_agegroup(agegroup)
+  def filter_agegroup(agegroup = nil)
     case agegroup
     when 'young'
       return filter_age(18, 29)
@@ -219,13 +219,15 @@ class Population
       return filter_age(50, 65)
     when 'elderly'
       return filter_age(66)
+    else
+      return @participants.dup
     end
   end
-  
+
   def polarity_count_for_theme(theme_no, pol)
     return (@participants.dup.delete_if {|p| p.polarity_for_theme(theme_no) != pol}).length
   end
-  
+
   def polarity_count_for_themes
     return (1..5).map{ |i| polarity_count_for_theme(i)}
   end
@@ -233,7 +235,7 @@ class Population
   def polarity_counts_for_theme(theme_no)
     return [1,0,-1].map{ |pol| (@participants.dup.delete_if {|p| p.polarity_for_theme(theme_no) != pol}).length}
   end
-  
+
   def polarity_counts_for_themes
     return (1..5).map{ |i| polarity_counts_for_theme(i)}
   end
@@ -269,29 +271,39 @@ end
 #   # puts participant.inspect
 # end
 
-def json_row(tn, v)
-  
+
+
+json = []
+
+(1..5).each do |theme_no|
+  [1, 0, -1].each do |valence|
+    json_obj = {"theme" => theme_no, "valence" => valence}
+    [nil, 1, 0].each do |g|
+      
+      if g.nil?
+        g_t = 'both'
+      elsif g == 1
+        g_t = 'male'
+      else
+        g_t = 'female'
+      end
+      
+      [nil, "young", "mature", "old", "elderly"].each do |ag|
+        
+        if ag.nil?
+          ag_t = 'all'
+          ag_t = ag
+        end
+        
+        json_obj["#{g_t}_#{ag_t}"] = 0#p.filter_gender(g).filter_agegroup(ag).
+      end
+    end
+    json << json_obj
+  end
 end
-
-
-
-# puts p.polarity_count_for_themes.inspect
-themes = ["personal","environment", "general","technology","legacy"]
-bigassjson = themes.each_with_index.map { |theme, theme_no|
-  {
-    :theme_name => theme
-    :data => {
-      :pos => 
-      :neg => 
-      :neu =>
-    }
-  }
-  # [1,0,-1].map{ |valence|
-  #     p.polarity_count_for_theme(theme_no, valence)
-  #   }
-}
-
-ap JSON.generate({:dataset => bigassjson})
+ap "Hello"
+ap json
+# ap JSON.generate({:dataset => bigassjson})
 
 
 
