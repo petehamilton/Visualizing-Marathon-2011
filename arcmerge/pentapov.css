@@ -5,9 +5,8 @@
 }
 
 #chart_container {
-    font: 10px sans-serif;
-    margin: 15px auto;
-    border-top: 2px solid #eee;
+    margin: 0px auto;
+    border-top: 2px solid #CCC;
     padding-top: 20px;
 }
 
@@ -18,10 +17,21 @@
 }
 
 body {
-    font-family:'Segoe UI', Arial, sans-serif;
+/*    font-family:'Segoe UI', Arial, sans-serif;*/
     text-anchor: middle;
     alignment-baseline: middle;
     font-size:11pt;
+    
+    color: #444;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 10px;
+    font-variant: normal;
+    font-weight: 300;
+    
+    text-shadow: 1px 1px 1px #cccccc;
+    filter: dropshadow(color=#cccccc, offx=1, offy=1);
+    
+    background-color: #fefefe;
 }
 
 #olympic_logo {
@@ -36,7 +46,9 @@ body {
 }
 
 #controllers_container_container{
-    border-top: 2px solid #eee;
+    border-top: 2px solid #CCC;
+    border-bottom: 1px solid #FFF;
+    padding-bottom: 10px;
 }
 
 #ageRadio{
@@ -63,4 +75,6 @@ body {
 
 #big_question{
     text-align: center;
+    font-family: "georgia";
+    font-weight: normal;
 }

@@ -36,12 +36,12 @@ var ages = [
 ];
 
 var sizes = {
-    small: {inner: 0.6, outer: 1, xoffset: 0, x_legoffset: 215, y_legoffset: 286},
+    small: {inner: 0.6, outer: 0.95, xoffset: 0, x_legoffset: 215, y_legoffset: 286},
     large: {inner: 0.6, outer: 0.85, xoffset: 0, x_legoffset: 645, y_legoffset: 15, gap_factor: 0.85 }
 }
 
 var view_modes = ['Proportions', 'Relationships'];
-
+var font_size = 15;
 // Initial Values //////////////////////
 
 var settings = {
@@ -57,7 +57,8 @@ var settings = {
 var chartW      = 1000;
 var chartH      = 700;
 var radius      = chartW / 8;
-var background  = 'white';
+var background  = '#FEFEFE';
+var foreground  = '#444444';
 
 // main svg for the chart
 var chart = d3.select('#chart_container')
@@ -65,15 +66,16 @@ var chart = d3.select('#chart_container')
   .append('svg:svg')
     .attr('id', 'chart')
     .attr('width', chartW)
-    .attr('height', chartH);
+    .attr('height', chartH)
+    .attr('fill', background);
 
 var logo = chart.append("svg:image") 
-            .attr("xlink:href", "2012_logo.jpeg") 
+            .attr("xlink:href", "2012_logo.png") 
             .attr("width", 150) 
             .attr("height", 150)
             .attr("x", chartW - 150)
             .attr("y", chartH - 150)
-            .attr("opacity", 0.4);
+            .attr("opacity", 0.8);
 
 // Ring Setup //////////////////////////////////////////////////////////////////
 
@@ -243,9 +245,9 @@ function toggle_view_mode(){
         change_formation("pentagram").each("end", function(e){
             settings.formation = "pentagram";
             ring_labels.transition().duration(1000)
-                .attr('fill', background);
+                .attr('opacity', 0);
             legend_rows.transition().duration(1000)
-                .attr('fill', "#444444")
+                .attr('opacity', 1)
                 .each("end", function(e){
                     change_formation("merged");
             });
@@ -254,9 +256,9 @@ function toggle_view_mode(){
         change_formation("pentagram").each("end", function(e){
             settings.formation = "pentagram";
             ring_labels.transition().duration(1000)
-                .attr('fill', '#444444');
+                .attr('opacity', 1);
             legend_rows.transition().duration(1000)
-                .attr('fill', background)
+                .attr('opacity', 0)
                 .each("end", function(e){
                     change_formation("logo");
             });
@@ -285,7 +287,7 @@ ages.map(function(a) {
         .attr('for', a.age + 'AgeRadio')
         .text(a.ageName);
 });
-$('#ageRadio').buttonset().css('font-size', 10 + 'px').change(function() { change_age($('.ageRadio:checked').val()); });
+$('#ageRadio').buttonset().change(function() { change_age($('.ageRadio:checked').val()); });
 
 //Sex controls
 var sexRadio = controls
@@ -303,7 +305,7 @@ sexes.map(function(s) {
         .attr('for', s.sex + 'SexRadio')
         .text(s.sexName);
 });
-$('#sexRadio').buttonset().css('font-size', 10 + 'px').change(function() { change_sex($('.sexRadio:checked').val()); });
+$('#sexRadio').buttonset().change(function() { change_sex($('.sexRadio:checked').val()); });
 
 // View controls
 var viewRadio = controls
@@ -321,7 +323,7 @@ view_modes.map(function(v) {
         .attr('for', v + 'viewRadio')
         .text(v);
 });
-$('#viewRadio').buttonset().css('font-size', 10 + 'px').change(function() { toggle_view_mode(); });
+$('#viewRadio').buttonset().change(function() { toggle_view_mode(); });
 
 
 // Chord Generation ////////////////////////////////////////////////////////////
@@ -395,7 +397,7 @@ function generate_legend(x,y,w,h){
         .attr('y',function(d){ return y + (Math.floor(d/3)+0.5)*(h+spacing)})
         .attr('height', h + "px")
         .attr('width', w + "px")
-        .attr('fill',function(d){ return colorbrewer[rings[Math.floor(d/3)].color][6][2+(2 - (d % 3))]})
+        .attr('fill',function(d){ return colorbrewer[rings[Math.floor(d/3)].color][6][1+(2 - (d % 3))]})
         .attr('stroke-width', 1)
         .attr('stroke', background)
         .attr('stroke-opacity', 1);
@@ -406,8 +408,8 @@ function generate_legend(x,y,w,h){
         .attr('x',function(d, i){ return x + (w*2/3) + (i % 3)*w})
         .attr('y', y)
         .text(function(d){return d})
-        .attr('font-size', 22)
-        .attr('fill', '#444444')
+        .attr('font-size', font_size*1.8)
+        .attr('fill', foreground)
     legend_rows = legend_group.selectAll(".legend_row")
         .data(themes)
         .enter()
@@ -417,7 +419,9 @@ function generate_legend(x,y,w,h){
         .text(function(d){return d})
         .attr('fill', background)
         .attr("text-anchor", "end")
-        .attr("font-size", 12)
+        .attr("font-size", font_size)
+        .attr('fill', foreground)
+        .attr('opacity', 0)
 }
 generate_legend(sizes.small.x_legoffset,sizes.small.y_legoffset,40,20);
 
@@ -441,8 +445,8 @@ d3.json('data.json', function(json) {
     ring_labels = ring_group
       .append('svg:text')
       .text(function(d) { return themes[d]; })
-      .attr('fill', '#444444')
-      .attr("font-size", 12)
+      .attr('fill', foreground)
+      .attr("font-size", font_size)
             
     // arc generator
     arc = d3.svg.arc()
