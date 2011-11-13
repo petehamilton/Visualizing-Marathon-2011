@@ -119,8 +119,19 @@ function change_sex(s) {
 }
 
 function arc_tween(d, s, a) {
-    var iS = d3.interpolate(get_arc_start_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI, get_arc_start_position(d.theme, d.valence, s, a) * 2 * Math.PI);
-    var iE = d3.interpolate(get_arc_end_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI, get_arc_end_position(d.theme, d.valence, s, a) * 2 * Math.PI);
+    var arc_start_old = get_arc_start_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI;
+    var arc_start_new = get_arc_start_position(d.theme, d.valence, s, a) * 2 * Math.PI;
+    var arc_end_old = get_arc_end_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI;
+    var arc_end_new = get_arc_end_position(d.theme, d.valence, s, a) * 2 * Math.PI;
+    console.log(settings.formation)
+    if( settings.formation == "merged"){
+        arc_start_old = arc_start_old / 5 + ((d.theme-.5)*(2/5)*Math.PI);
+        arc_end_old = arc_end_old / 5 + ((d.theme-.5)*(2/5)*Math.PI);
+        arc_start_new = arc_start_new / 5 + ((d.theme-.5)*(2/5)*Math.PI);
+        arc_end_new = arc_end_new / 5 + ((d.theme-.5)*(2/5)*Math.PI);
+    }
+    var iS = d3.interpolate(arc_start_old , arc_start_new);
+    var iE = d3.interpolate(arc_end_old, arc_end_new);
     return function(t) {
         return arc.startAngle(iS(t)).endAngle(iE(t))();
     };
@@ -152,9 +163,9 @@ function get_formation_translation(ring, formation){
 // reposition circles
 function change_formation(new_formation) {
     // move gs
-    ring_group.transition().duration(1000)
-        .attrTween('transform', function(d) { return group_tween(d, new_formation); }).each("end", function(e){ settings.formation = new_formation});
     change_radius(new_formation);
+    return ring_group.transition().duration(1000)
+        .attrTween('transform', function(d) { return group_tween(d, new_formation); }).each("end", function(e){ settings.formation = new_formation });
 }
 
 function group_tween(ring, new_formation) {
@@ -200,6 +211,14 @@ function change_radius(formation) {
     if(settings.formation != "merged" && formation == "merged"){
         arcs.transition().duration(1000)
             .attrTween('d', function(d,i) { return tween_radius(d, "explode"); });
+    }
+}
+
+function toggle_view_mode(){
+    if (settings.formation != "merged"){
+        change_formation("pentagram").each("end", function(e){ settings.formation = "pentagram"; change_formation("merged") })
+    }else{
+        change_formation("pentagram").each("end", function(e){ settings.formation = "pentagram"; change_formation("logo") })
     }
 }
 
