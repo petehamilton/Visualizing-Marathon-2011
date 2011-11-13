@@ -41,7 +41,7 @@ body {
 }
 
 #controllers_container{
-    width: 690px;
+    width: 700px;
     margin: 15px auto 0px auto;
 }
 
@@ -52,7 +52,7 @@ body {
 }
 
 #ageRadio{
-    width: 280px;
+    width: 290px;
     margin: 5px 10px;
     float: left;
 }
@@ -77,4 +77,5 @@ body {
     text-align: center;
     font-family: "georgia";
     font-weight: normal;
+    font-size: 17px;
 }
