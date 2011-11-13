@@ -62,19 +62,22 @@ var chart = d3.select('body')
 
 // Ring Setup //////////////////////////////////////////////////////////////////
 
+theme_map = [2,4,3,1,0];
+// theme_map = [0,1,2,3,4];
+
 // numbers and colors
 var rings = [
-    {ring: 0, color: 'Blues'}, 
-    {ring: 1, color: 'YlOrRd'},
-    {ring: 2, color: 'Greys'},
-    {ring: 3, color: 'Greens'}, 
-    {ring: 4, color: 'Reds'}
+    {ring: theme_map[0], color: 'Blues'}, 
+    {ring: theme_map[1], color: 'YlOrRd'},
+    {ring: theme_map[2], color: 'Greys'},
+    {ring: theme_map[3], color: 'Greens'}, 
+    {ring: theme_map[4], color: 'Reds'}
 ];
 
 // Set the ring positions
 rings.map(function(d,i) {
-    rings[i]['x'] = (i+1)*radius;
-    rings[i]['y'] = ((i%2)+1)*radius;
+    rings[i]['x'] = (theme_map[i] + 1) * radius;
+    rings[i]['y'] = ((theme_map[i] % 2) + 1) * radius;
 })
 
 // Functions to simplify things //////////////////////////////////////////
@@ -123,7 +126,6 @@ function arc_tween(d, s, a) {
     var arc_start_new = get_arc_start_position(d.theme, d.valence, s, a) * 2 * Math.PI;
     var arc_end_old = get_arc_end_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI;
     var arc_end_new = get_arc_end_position(d.theme, d.valence, s, a) * 2 * Math.PI;
-    console.log(settings.formation)
     if( settings.formation == "merged"){
         arc_start_old = arc_start_old / 5 + ((d.theme-.5)*(2/5)*Math.PI);
         arc_end_old = arc_end_old / 5 + ((d.theme-.5)*(2/5)*Math.PI);
@@ -143,11 +145,11 @@ function get_formation_translation(ring, formation){
         case "pentagram":
             //TODO - do clever things with me
             switch(ring) {
-                case 0: return 'translate(' + ((3*radius) - (Math.cos(Math.PI/10)*2*radius)) + ',' + ((3*radius) - (Math.sin(Math.PI/10)*2*radius)) + ')'; break;
-                case 1: return 'translate(' + ((3*radius) - (Math.sin(Math.PI/5)*2*radius)) + ',' + ((3*radius) + (Math.cos(Math.PI/5)*2*radius)) + ')'; break;
-                case 2: return 'translate(' + (3*radius) + ',' + radius + ')'; break;
-                case 3: return 'translate(' + ((3*radius) + (Math.sin(Math.PI/5)*2*radius)) + ',' + ((3*radius) + (Math.cos(Math.PI/5)*2*radius)) + ')'; break;
-                case 4: return 'translate(' + ((3*radius) + (Math.cos(Math.PI/10)*2*radius)) + ',' + ((3*radius) - (Math.sin(Math.PI/10)*2*radius)) + ')'; break;
+                case 4: return 'translate(' + ((3*radius) - (Math.cos(Math.PI/10)*2*radius)) + ',' + ((3*radius) - (Math.sin(Math.PI/10)*2*radius)) + ')'; break;
+                case 3: return 'translate(' + ((3*radius) - (Math.sin(Math.PI/5)*2*radius)) + ',' + ((3*radius) + (Math.cos(Math.PI/5)*2*radius)) + ')'; break;
+                case 0: return 'translate(' + (3*radius) + ',' + radius + ')'; break;
+                case 2: return 'translate(' + ((3*radius) + (Math.sin(Math.PI/5)*2*radius)) + ',' + ((3*radius) + (Math.cos(Math.PI/5)*2*radius)) + ')'; break;
+                case 1: return 'translate(' + ((3*radius) + (Math.cos(Math.PI/10)*2*radius)) + ',' + ((3*radius) - (Math.sin(Math.PI/10)*2*radius)) + ')'; break;
             };
             break;
         case "merged":
