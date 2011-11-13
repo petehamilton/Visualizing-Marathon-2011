@@ -36,8 +36,8 @@ var ages = [
 ];
 
 var sizes = {
-    small: {inner: 0.6, outer: 0.8},
-    large: {inner: 0.7, outer: 0.9}
+    small: {inner: 0.6, outer: 0.8, xoffset: 200},
+    large: {inner: 0.6, outer: 0.8, xoffset: 0}
 }
 
 // Initial Values //////////////////////
@@ -51,9 +51,9 @@ var settings = {
 // Layout & Page controls //////////////////////////////////////////////////////
 
 // various spacing parameters
-var chartW      = 600;
+var chartW      = 1000;
 var chartH      = 600;
-var radius      = chartW / 6;
+var radius      = chartW / 10;
 var background  = 'white';
 
 // main svg for the chart
@@ -80,7 +80,7 @@ var rings = [
 
 // Set the ring positions
 rings.map(function(d,i) {
-    rings[i]['x'] = (theme_map[i] + 1) * radius;
+    rings[i]['x'] = (theme_map[i] + 1) * radius + sizes.small.xoffset;
     rings[i]['y'] = ((theme_map[i] % 2)*1.6 + 1) * radius;
 })
 
@@ -149,15 +149,15 @@ function get_formation_translation(ring, formation){
         case "pentagram":
             //TODO - do clever things with me
             switch(ring) {
-                case 4: return 'translate(' + ((3*radius) - (Math.cos(Math.PI/10)*2*radius)) + ',' + ((3*radius) - (Math.sin(Math.PI/10)*2*radius)) + ')'; break;
-                case 3: return 'translate(' + ((3*radius) - (Math.sin(Math.PI/5)*2*radius)) + ',' + ((3*radius) + (Math.cos(Math.PI/5)*2*radius)) + ')'; break;
-                case 0: return 'translate(' + (3*radius) + ',' + radius + ')'; break;
-                case 2: return 'translate(' + ((3*radius) + (Math.sin(Math.PI/5)*2*radius)) + ',' + ((3*radius) + (Math.cos(Math.PI/5)*2*radius)) + ')'; break;
-                case 1: return 'translate(' + ((3*radius) + (Math.cos(Math.PI/10)*2*radius)) + ',' + ((3*radius) - (Math.sin(Math.PI/10)*2*radius)) + ')'; break;
+                case 4: return 'translate(' + ((3*radius + sizes.large.xoffset) - (Math.cos(Math.PI/10)*2*radius)) + ',' + ((3*radius) - (Math.sin(Math.PI/10)*2*radius)) + ')'; break;
+                case 3: return 'translate(' + ((3*radius + sizes.large.xoffset) - (Math.sin(Math.PI/5)*2*radius)) + ',' + ((3*radius) + (Math.cos(Math.PI/5)*2*radius)) + ')'; break;
+                case 0: return 'translate(' + (3*radius + sizes.large.xoffset) + ',' + radius + ')'; break;
+                case 2: return 'translate(' + ((3*radius + sizes.large.xoffset) + (Math.sin(Math.PI/5)*2*radius)) + ',' + ((3*radius) + (Math.cos(Math.PI/5)*2*radius)) + ')'; break;
+                case 1: return 'translate(' + ((3*radius + sizes.large.xoffset) + (Math.cos(Math.PI/10)*2*radius)) + ',' + ((3*radius) - (Math.sin(Math.PI/10)*2*radius)) + ')'; break;
             };
             break;
         case "merged":
-            return 'translate(' + (3*radius) + ',' + (3*radius) + ')';
+            return 'translate(' + (3*radius + sizes.large.xoffset) + ',' + (3*radius) + ')';
             break;
         default: //logo
             return 'translate(' + rings[ring].x + ',' + rings[ring].y + ')';
@@ -169,6 +169,7 @@ function get_formation_translation(ring, formation){
 function change_formation(new_formation) {
     // move gs
     change_radius(new_formation);
+    d3.selectAll('.chord_group').remove();
     return ring_group.transition().duration(1000)
         .attrTween('transform', function(d) { return group_tween(d, new_formation); }).each("end", function(e){ settings.formation = new_formation });
 }
@@ -278,7 +279,7 @@ function draw_chords(source_theme, source_valence) {
     
     // add a group for the chords
     chord_group = chart.append('svg:g')
-        .attr('transform', 'translate(' + (3*radius) + ',' + (3*radius) + ')')
+        .attr('transform', 'translate(' + (3*radius + sizes.large.xoffset) + ',' + (3*radius) + ')')
         .attr('id', 'chord_group_' + source_theme + '_' + source_valence);
     
     // loop through the other themes
@@ -314,13 +315,11 @@ function draw_chords(source_theme, source_valence) {
                     .attr('fill', colorbrewer[rings[target_theme_index].color][4][1+target_valence_index])
                     .attr('stroke', background)
                     .attr('stroke-width', 2)
-                    .attr('stroke-opacity', .3);
+                    .attr('stroke-opacity', .3)
+                    .attr('class', 'chord_group');
                 
                 // update start angle
                 source_start += (d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum) * (2/5) * Math.PI * get_proportion(source_theme, source_valence, settings.sex, settings.age);
-                
-            
-            
             });
         }
     });
@@ -373,14 +372,15 @@ d3.json('data.json', function(json) {
         .attr('fill-opacity', 1)
         .attr('stroke-width', 2)
         .on('mouseover', function(d) { if (settings.formation == 'merged') draw_chords(d.theme, d.valence)})
-		.on('mouseout', function(d) { if (settings.formation == 'merged' && settings.stored_chord != d.theme + '_' + d.valence) d3.select('#chord_group_' + d.theme + '_' + d.valence).remove(); })
-		.on('click', function(d) {
-		    chord_name = d.theme + '_' + d.valence
-	        d3.select('#chord_group_' + settings.stored_chord).remove();
-		    if (settings.stored_chord == chord_name){
-		        settings.stored_chord = null;
-		    }else{
-		        settings.stored_chord = chord_name;
-		    }
-		});
+        .on('mouseout', function(d) { if (settings.formation == 'merged' && settings.stored_chord != d.theme + '_' + d.valence) d3.select('#chord_group_' + d.theme + '_' + d.valence).remove(); })
+        .on('click', function(d) {
+            chord_name = d.theme + '_' + d.valence
+            d3.selectAll('.chord_group').remove();
+            draw_chords(d.theme, d.valence)
+            if (settings.stored_chord == chord_name){
+                settings.stored_chord = null;
+            }else{
+                settings.stored_chord = chord_name;
+            }
+        });
 });
