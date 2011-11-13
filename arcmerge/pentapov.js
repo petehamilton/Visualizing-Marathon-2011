@@ -1,20 +1,11 @@
 //Colours for data. Themes 1..5, [1, 0, -1]
 var colors = [
-    "#000000", "#FFDD89", "#957244",
-    "#000000", "#FFDD89", "#957244",
-    "#000000", "#FFDD89", "#957244",
-    "#000000", "#FFDD89", "#957244",
-    "#000000", "#FFDD89", "#957244"
+    "#143F7F", "#2065CC", "#74ACFF", // blue
+    "#7F0200", "#CC0300", "#FF4F4C", // red
+    "#7F4A00", "#CC7700", "#FFB44C", // yellow
+    "#577F00", "#8CCC00", "#C7FF4C", //
+    "#333333", "#CCCCCC", "#EEEEEE"
 ];
-
-//Theme names
-// var themes = [
-//     'Personal Well-Being',
-//     'Technology/Economy',
-//     'Emotions',
-//     'Environment',
-//     'Legacy'
-// ]
 
 var themes = [
     'Technology/Economy',
@@ -61,7 +52,7 @@ var radius      = chartW / 6;
 var background  = 'white';
 
 // main svg for the chart
-var chart = d3.select('body')
+var chart = d3.select('#chart_container')
   .append('div')
   .append('svg:svg')
     .attr('id', 'chart')
@@ -85,7 +76,7 @@ var rings = [
 // Set the ring positions
 rings.map(function(d,i) {
     rings[i]['x'] = (theme_map[i] + 1) * radius;
-    rings[i]['y'] = ((theme_map[i] % 2) + 1) * radius;
+    rings[i]['y'] = ((theme_map[i] % 2)*1.3 + 1) * radius;
 })
 
 // Functions to simplify things //////////////////////////////////////////
@@ -190,10 +181,10 @@ function tween_radius(d, direction) {
         implodedE = arc_end * 2 * Math.PI,
         explodedS = ((d.theme-.5)*(2/5)*Math.PI) + arc_start * (2/5) * Math.PI,
         explodedE = ((d.theme-.5)*(2/5)*Math.PI) + arc_end * (2/5) * Math.PI,
-        implodedIR = radius / 2,
+        implodedIR = radius * (5/10),
         implodedOR = radius * (7/10),
-        explodedIR = 3*radius*(4/5),
-        explodedOR = 3*radius;
+        explodedIR = 3*radius*(4/10),
+        explodedOR = 3*radius*(8/10);
     if (direction == 'explode') {
         var iS = d3.interpolate(implodedS, explodedS),
             iE = d3.interpolate(implodedE, explodedE),
@@ -232,7 +223,7 @@ function toggle_view_mode(){
 }
 
 // Controls ////////////////////////////////////////////////////////////////////
-var controls = d3.select('body')
+var controls = d3.select('#controllers_container')
   .append('div')
   .attr('id', 'controls');
 

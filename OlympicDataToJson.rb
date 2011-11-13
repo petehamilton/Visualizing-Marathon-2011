@@ -23,21 +23,21 @@ class CSVEvaluator
     {:col => 42, :theme => 2, :func  => 'agree_negative'},
 
     #FP6
-    {:col => 43, :theme => 5, :func  => 'select_negative'},
-    {:col => 44, :theme => 4, :func  => 'select_negative'},
-    {:col => 45, :theme => 4, :func  => 'select_negative'},
-    {:col => 46, :theme => 4, :func  => 'select_negative'},
-    {:col => 47, :theme => 4, :func  => 'select_negative'},
-    {:col => 48, :theme => 4, :func  => 'select_negative'},
-    {:col => 49, :theme => 5, :func  => 'select_negative'},
-    {:col => 50, :theme => 4, :func  => 'select_negative'},
-    {:col => 51, :theme => 4, :func  => 'select_negative'},
-    {:col => 52, :theme => 4, :func  => 'select_negative'},
-    {:col => 53, :theme => 3, :func  => 'select_negative'},
-    {:col => 54, :theme => 5, :func  => 'select_negative'},
-    {:col => 55, :theme => 5, :func  => 'select_negative'},
-    {:col => 56, :theme => 4, :func  => 'select_negative'},
-    {:col => 57, :theme => 0, :func  => 'select_negative'}, #NOTA
+    {:col => 43, :theme => 5, :func  => 'select_positive'},
+    {:col => 44, :theme => 4, :func  => 'select_positive'},
+    {:col => 45, :theme => 4, :func  => 'select_positive'},
+    {:col => 46, :theme => 4, :func  => 'select_positive'},
+    {:col => 47, :theme => 4, :func  => 'select_positive'},
+    {:col => 48, :theme => 4, :func  => 'select_positive'},
+    {:col => 49, :theme => 5, :func  => 'select_positive'},
+    {:col => 50, :theme => 4, :func  => 'select_positive'},
+    {:col => 51, :theme => 4, :func  => 'select_positive'},
+    {:col => 52, :theme => 4, :func  => 'select_positive'},
+    {:col => 53, :theme => 3, :func  => 'select_positive'},
+    {:col => 54, :theme => 5, :func  => 'select_positive'},
+    {:col => 55, :theme => 5, :func  => 'select_positive'},
+    {:col => 56, :theme => 4, :func  => 'select_positive'},
+    # {:col => 57, :theme => 0, :func  => 'select_positive'}, #NOTA
 
     #FP7
     {:col => 58, :theme => 1, :func  => 'select_negative'},
@@ -52,7 +52,7 @@ class CSVEvaluator
     {:col => 67, :theme => 4, :func  => 'select_negative'},
     {:col => 68, :theme => 4, :func  => 'select_negative'},
     {:col => 69, :theme => 1, :func  => 'select_negative'},
-    {:col => 70, :theme => 0, :func  => 'select_negative'}, #NOTA
+    # {:col => 70, :theme => 0, :func  => 'select_negative'}, #NOTA
 
     #FP8
     {:col => 71, :theme => 1, :func  => 'yes_no_positive'},
@@ -72,7 +72,7 @@ class CSVEvaluator
     {:col => 83, :theme => 3, :func  => 'select_positive'},
     {:col => 84, :theme => 3, :func  => 'select_negative'},
     {:col => 85, :theme => 3, :func  => 'select_positive'},
-    {:col => 86, :theme => 0, :func  => 'select_positive'}, #NOTA
+    # {:col => 86, :theme => 0, :func  => 'select_positive'}, #NOTA
 
     #FP10
     {:col => 87, :theme => 3, :func  => 'agree_positive'},
@@ -157,7 +157,7 @@ class CSVEvaluator
       result = eval expr
       themes[rule[:theme]] << result
     end
-    return Participant.new(themes, row[3].downcase == 'male' ? 1 : 0, row[4])
+    return Participant.new(themes, row[3].downcase == 'male' ? 1 : 0, row[4].to_i)
   end
 end
 
@@ -219,10 +219,28 @@ class Population
       return Population.new(@participants.dup)
     end
   end
-
+  
+  def check_linkage(t1n,t1v,t2n,t2v,p)
+    result = p.polarity_for_theme(t1n) != t1v && p.polarity_for_theme(t2n) != t2v
+    
+    if t1n == t2n
+      print "Same theme"
+      if t1v == t2v
+        puts "And Same Valency"
+        puts result
+      else
+        puts result
+      end
+    end
+    puts
+    # puts "Polarity t1: #{p.polarity_for_theme(t1n)}, Polarity t2: #{p.polarity_for_theme(t2n)}, Result: #{p.polarity_for_theme(t1n) != t1v && p.polarity_for_theme(t2n) != t2v}"
+  end
+  
+  
   def linkage_matrix_entry(t1n,t1v,t2n,t2v)
     # return 0 if t1n == t2n
-    return (@participants.dup.delete_if {|p| p.polarity_for_theme(t1n) != t1v && p.polarity_for_theme(t2n) != t2v}).length
+    # return (@participants.dup.delete_if {|p| p.polarity_for_theme(t1n) != t1v && p.polarity_for_theme(t2n) != t2v}).length
+    return (@participants.dup.delete_if {|p| check_linkage(t1n,t1v,t2n,t2v,p); return p.polarity_for_theme(t1n) != t1v && p.polarity_for_theme(t2n) != t2v}).length
   end
 
   def full_linkage_matrix
@@ -232,6 +250,7 @@ class Population
     row = 0
     [4,5,2,3,1].each do |t1n|
       [0, 1, 2].each do |t1v|
+        
         [4,5,2,3,1].each do |t2n|
           [0, 1, 2].each do |t2v|
             matrix[row] << linkage_matrix_entry(t1n,t1v,t2n,t2v)
@@ -269,11 +288,12 @@ def matrixjson(p)
 end
 
 p = Population.new
+
 index = 0
 CSV.foreach("OlympicFutures_UK_Raw.csv", :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
   p.participants << CSVEvaluator.eval_row(row)
   index += 1
-  # break if index == 10
+  break if index == 10
 end
 
 #Output Matrix data as json
