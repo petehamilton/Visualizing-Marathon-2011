@@ -36,8 +36,8 @@ var ages = [
 ];
 
 var sizes = {
-    small: {inner: 0.6, outer: 0.8, xoffset: 200},
-    large: {inner: 0.6, outer: 0.8, xoffset: 0}
+    small: {inner: 0.6, outer: 0.8, xoffset: 200, x_legoffset: 215, y_legoffset: 205},
+    large: {inner: 0.6, outer: 0.8, xoffset: 0, x_legoffset: 600, y_legoffset: 0, gap_factor: 0.9 }
 }
 
 // Initial Values //////////////////////
@@ -98,7 +98,7 @@ function get_proportion(tn, v, s, a){
         total += dataset[get_demographic(s, a)][diag][diag];
     });
     count = dataset[get_demographic(s, a)][tn*valencies.length + v][tn*valencies.length + v];
-    return count / total;
+    return (count / total);
 }
 
 function get_arc_start_position(tn, v, s, a){
@@ -147,6 +147,8 @@ function arc_tween(d, s, a) {
 function get_formation_translation(ring, formation){
     switch(formation){
         case "pentagram":
+            legend_group.transition().duration(1000)
+                .attr('transform', 'translate(' + sizes.large.x_legoffset + ',' + sizes.large.y_legoffset  + ')')
             //TODO - do clever things with me
             switch(ring) {
                 case 4: return 'translate(' + ((3*radius + sizes.large.xoffset) - (Math.cos(Math.PI/10)*2*radius)) + ',' + ((3*radius) - (Math.sin(Math.PI/10)*2*radius)) + ')'; break;
@@ -160,6 +162,8 @@ function get_formation_translation(ring, formation){
             return 'translate(' + (3*radius + sizes.large.xoffset) + ',' + (3*radius) + ')';
             break;
         default: //logo
+            legend_group.transition().duration(1000)
+                .attr('transform', 'translate(' + sizes.small.x_legoffset + ',' + sizes.small.y_legoffset  + ')')
             return 'translate(' + rings[ring].x + ',' + rings[ring].y + ')';
             break;
     }
@@ -171,7 +175,9 @@ function change_formation(new_formation) {
     change_radius(new_formation);
     d3.selectAll('.chord_group').remove();
     return ring_group.transition().duration(1000)
-        .attrTween('transform', function(d) { return group_tween(d, new_formation); }).each("end", function(e){ settings.formation = new_formation });
+        .attrTween('transform', function(d) { return group_tween(d, new_formation); }).each("end", function(e){
+            settings.formation = new_formation;
+        });
 }
 
 function group_tween(ring, new_formation) {
@@ -181,8 +187,8 @@ function group_tween(ring, new_formation) {
 
 // donut imploder/exploder
 function tween_radius(d, direction) {
-    var arc_start = get_arc_start_position(d.theme, d.valence, settings.sex, settings.age);
-    var arc_end = get_arc_end_position(d.theme, d.valence, settings.sex, settings.age);
+    var arc_start = get_arc_start_position(d.theme, d.valence, settings.sex, settings.age)*sizes.large.gap_factor;
+    var arc_end = get_arc_end_position(d.theme, d.valence, settings.sex, settings.age)*sizes.large.gap_factor;
     var implodedS = arc_start * 2 * Math.PI,
         implodedE = arc_end * 2 * Math.PI,
         explodedS = ((d.theme-.5)*(2/5)*Math.PI) + arc_start * (2/5) * Math.PI,
@@ -223,9 +229,27 @@ function change_radius(formation) {
 
 function toggle_view_mode(){
     if (settings.formation != "merged"){
-        change_formation("pentagram").each("end", function(e){ settings.formation = "pentagram"; change_formation("merged") })
+        change_formation("pentagram").each("end", function(e){
+            settings.formation = "pentagram";
+            ring_labels.transition().duration(1000)
+                .attr('fill', background);
+            legend_rows.transition().duration(1000)
+                .attr('fill', "#444444")
+                .each("end", function(e){
+                    change_formation("merged");
+            });
+        });
     }else{
-        change_formation("pentagram").each("end", function(e){ settings.formation = "pentagram"; change_formation("logo") })
+        change_formation("pentagram").each("end", function(e){
+            settings.formation = "pentagram";
+            ring_labels.transition().duration(1000)
+                .attr('fill', '#444444');
+            legend_rows.transition().duration(1000)
+                .attr('fill', background)
+                .each("end", function(e){
+                    change_formation("logo");
+            });
+        });
     }
 }
 
@@ -297,13 +321,13 @@ function draw_chords(source_theme, source_valence) {
         if (target_theme_index != source_theme) {
             
             // loop through the valences
-            var source_start = ((source_theme-.5)*(2/5)*Math.PI) + get_arc_start_position(source_theme, source_valence, settings.sex, settings.age) * (2/5) * Math.PI,
-                source_end = ((source_theme-.5)*(2/5)*Math.PI) + get_arc_start_position(source_theme, source_valence, settings.sex, settings.age) * (2/5) * Math.PI;
+            var source_start = ((source_theme-.5)*(2/5)*Math.PI) + get_arc_start_position(source_theme, source_valence, settings.sex, settings.age) * sizes.large.gap_factor * (2/5) * Math.PI,
+                source_end = ((source_theme-.5)*(2/5)*Math.PI) + get_arc_start_position(source_theme, source_valence, settings.sex, settings.age) * sizes.large.gap_factor * (2/5) * Math.PI;
             valencies.map(function(target_valence, target_valence_index) {
                 // update end angle
-                source_end += (d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum) * (2/5) * Math.PI * get_proportion(source_theme, source_valence, settings.sex, settings.age);
-                var target_start = get_arc_start_position(target_theme_index, target_valence_index, settings.sex, settings.age) * 2/5 * Math.PI + ((target_theme_index-.5)*(2/5)*Math.PI),
-                    target_end = target_start + (d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum)*get_proportion(source_theme, source_valence, settings.sex, settings.age) * 2/5 * Math.PI;
+                source_end += (d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum) * (2/5) * Math.PI * get_proportion(source_theme, source_valence, settings.sex, settings.age) * sizes.large.gap_factor;
+                var target_start = get_arc_start_position(target_theme_index, target_valence_index, settings.sex, settings.age) * sizes.large.gap_factor * 2/5 * Math.PI + ((target_theme_index-.5)*(2/5)*Math.PI),
+                    target_end = target_start + (d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum)*get_proportion(source_theme, source_valence, settings.sex, settings.age) * sizes.large.gap_factor * 2/5 * Math.PI;
                 
                 // draw the chord
                 chord_group.append('svg:path')
@@ -323,10 +347,49 @@ function draw_chords(source_theme, source_valence) {
             });
         }
     });
-    
-    
-    
 }
+
+// Legend //////////////////////////////////////////////////////////////////////
+var legend_group;
+var legend_rows;
+function generate_legend(x,y,w,h){
+    spacing = 2;
+    console.log("generate legend")
+    legend_group = chart.append('svg:g')
+        .attr('transform', 'translate(' + x + ',' + y + ')')
+    legend_group.selectAll(".legend_cell")
+        .data(d3.range(15))
+        .enter()
+        .append('svg:rect')
+        .attr('x',function(d){ return x + (w*2/3)  + (d % 3)*w - w/2})
+        .attr('y',function(d){ return y + (Math.floor(d/3)+0.5)*(h+spacing)})
+        .attr('height', h + "px")
+        .attr('width', w + "px")
+        .attr('fill',function(d){ return colorbrewer[rings[Math.floor(d/3)].color][4][1+(2 - (d % 3))]})
+        .attr('stroke-width', 1)
+        .attr('stroke', background)
+        .attr('stroke-opacity', 1);
+    legend_group.selectAll(".legend_col")
+        .data(["☺", " ", "☹"])
+        .enter()
+        .append('svg:text')
+        .attr('x',function(d, i){ return x + (w*2/3) + (i % 3)*w})
+        .attr('y', y)
+        .text(function(d){return d})
+        .attr('font-size', 22)
+        .attr('fill', '#444444')
+    legend_rows = legend_group.selectAll(".legend_row")
+        .data(themes)
+        .enter()
+        .append('svg:text')
+        .attr('x', x)
+        .attr('y', function(d,i){ return y + 3 + (i + 1)*(h+spacing) })
+        .text(function(d){return d})
+        .attr('fill', background)
+        .attr("text-anchor", "end")
+        .attr("font-size", 12)
+}
+generate_legend(sizes.small.x_legoffset,sizes.small.y_legoffset,40,20);
 
 // Load in Data ////////////////////////////////////////////////////////////////
 
@@ -347,7 +410,9 @@ d3.json('data.json', function(json) {
     // add the title for each ring
     ring_labels = ring_group
       .append('svg:text')
-      .text(function(d) { return themes[d]; });
+      .text(function(d) { return themes[d]; })
+      .attr('fill', '#444444')
+      .attr("font-size", 12)
             
     // arc generator
     arc = d3.svg.arc()
