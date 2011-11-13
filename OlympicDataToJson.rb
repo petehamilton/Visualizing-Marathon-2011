@@ -157,17 +157,18 @@ class CSVEvaluator
       result = eval expr
       themes[rule[:theme]] << result
     end
-    return Participant.new(themes, row[3].downcase == 'male' ? 1 : 0, row[4].to_i)
+    return Participant.new(themes, row[3].downcase == 'male' ? 1 : 0, row[4].to_i, row[1].downcase == 'london' ? 1 : 0)
   end
 end
 
 class Participant
-  attr_accessor :gender, :age, :themes
+  attr_accessor :gender, :age, :themes, :londoner
 
-  def initialize(themes, gender, age)
+  def initialize(themes, gender, age, londoner)
     @themes = themes
     @gender = gender.to_i
     @age = age.to_i
+    @londoner = londoner.to_i
   end
 
   def average_for_theme(theme_no)
@@ -186,7 +187,7 @@ class Participant
   end
 
   def inspect
-    {:age => @age, :gender => @gender == 1 ? 'M' : 'F', :theme_averages => average_for_themes}
+    {:age => @age, :gender => @gender == 1 ? 'M' : 'F', :londoner => @londoner, :theme_averages => average_for_themes}
   end
 end
 
@@ -203,6 +204,10 @@ class Population
 
   def filter_age(min = 18, max = 100)
     return Population.new(@participants.dup.delete_if {|p| p.age < min || p.age > max})
+  end
+  
+  def filter_londoner(londoner = nil)
+    return Population.new(@participants.dup.delete_if {|p| p.londoner != londoner && londoner != nil})
   end
 
   def filter_agegroup(agegroup = nil)
@@ -267,22 +272,32 @@ end
 #Func to get link matrix json
 def matrixjson(p)
   json_obj = {}
-  [nil, "young", "mature", "older", "elderly"].each do |ag|
-    if ag.nil?
-      ag_t = 'all'
+  [nil, 1, 0].each do |lr|
+    if lr.nil?
+      lr_t = 'both'
+    elsif lr == 1
+      lr_t = 'londoner'
     else
-      ag_t = ag
+      lr_t = 'elsewhere'
     end
-
-    [nil, 1, 0].each do |g|
-      if g.nil?
-        g_t = 'both'
-      elsif g == 1
-        g_t = 'male'
+    
+    [nil, "young", "mature", "older", "elderly"].each do |ag|
+      if ag.nil?
+        ag_t = 'all'
       else
-        g_t = 'female'
+        ag_t = ag
       end
-      json_obj["#{g_t}_#{ag_t}"] = p.filter_gender(g).filter_agegroup(ag).full_linkage_matrix
+
+      [nil, 1, 0].each do |g|
+        if g.nil?
+          g_t = 'both'
+        elsif g == 1
+          g_t = 'male'
+        else
+          g_t = 'female'
+        end
+        json_obj["#{g_t}_#{ag_t}_#{lr_t}"] = p.filter_gender(g).filter_agegroup(ag).filter_londoner(lr).full_linkage_matrix
+      end
     end
   end
   return json_obj

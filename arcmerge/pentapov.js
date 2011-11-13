@@ -35,6 +35,12 @@ var ages = [
     {'age': 'elderly',  'ageName': '66+'}
 ];
 
+var londoners = [
+    {'londoner': 'both', 'londonerName': 'All Locations'}, 
+    {'londoner': 'londoner', 'londonerName':'Only Londoners'}, 
+    {'londoner': 'elsewhere', 'londonerName':'Only Elsewhere'}
+];
+
 var sizes = {
     small: {inner: 0.6, outer: 0.95, xoffset: 0, x_legoffset: 215, y_legoffset: 286},
     large: {inner: 0.6, outer: 0.85, xoffset: 0, x_legoffset: 645, y_legoffset: 15, gap_factor: 0.85 }
@@ -47,6 +53,7 @@ var font_size = 15;
 var settings = {
     sex: 'both',
     age: 'all',
+    londoner: 'both',
     formation: 'logo',
     view_mode: 'Proportions'
 }
@@ -99,50 +106,54 @@ rings.map(function(d,i) {
 
 // Functions to simplify things //////////////////////////////////////////
 
-function get_demographic(s, a){
-    return s + "_" + a;
+function get_demographic(s, a, l){
+    return s + "_" + a + "_" + l;
 }
 
-function get_proportion(tn, v, s, a){
+function get_proportion(tn, v, s, a, l){
     total = 0;
     var diag;
     valencies.map(function(v){
         diag = tn*valencies.length + v.val;
-        total += dataset[get_demographic(s, a)][diag][diag];
+        total += dataset[get_demographic(s, a, l)][diag][diag];
     });
-    count = dataset[get_demographic(s, a)][tn*valencies.length + v][tn*valencies.length + v];
+    count = dataset[get_demographic(s, a, l)][tn*valencies.length + v][tn*valencies.length + v];
     return (count / total);
 }
 
-function get_arc_start_position(tn, v, s, a){
+function get_arc_start_position(tn, v, s, a, l){
     offset = 0;
     valencies.map(function(v2){
         if (v2.val < v){
-            offset += get_proportion(tn, v2.val, s, a);
+            offset += get_proportion(tn, v2.val, s, a, l);
         }
     });
     return offset;
 }
 
-function get_arc_end_position(tn, v, s, a){
-    return get_arc_start_position(tn, v, s, a) + get_proportion(tn, v, s, a);
+function get_arc_end_position(tn, v, s, a, l){
+    return get_arc_start_position(tn, v, s, a, l) + get_proportion(tn, v, s, a, l);
 }
 
 // Animation functions ////////////////////////////////////////////////////////
 
 function change_age(a) {
-    arcs.transition().duration(1000).attrTween('d', function(d){return arc_tween(d, settings.sex, a)}).each("end", function(e){ settings.age = a});
+    arcs.transition().duration(1000).attrTween('d', function(d){return arc_tween(d, settings.sex, a, settings.londoner)}).each("end", function(e){ settings.age = a});
 }
 
 function change_sex(s) {
-    arcs.transition().duration(1000).attrTween('d', function(d){return arc_tween(d, s, settings.age)}).each("end", function(e){ settings.sex = s});
+    arcs.transition().duration(1000).attrTween('d', function(d){return arc_tween(d, s, settings.age, settings.londoner)}).each("end", function(e){ settings.sex = s});
 }
 
-function arc_tween(d, s, a) {
-    var arc_start_old = get_arc_start_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI;
-    var arc_start_new = get_arc_start_position(d.theme, d.valence, s, a) * 2 * Math.PI;
-    var arc_end_old = get_arc_end_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI;
-    var arc_end_new = get_arc_end_position(d.theme, d.valence, s, a) * 2 * Math.PI;
+function change_londoner(l) {
+    arcs.transition().duration(1000).attrTween('d', function(d){return arc_tween(d, settings.sex, settings.age, l)}).each("end", function(e){ settings.londoner = l});
+}
+
+function arc_tween(d, s, a, l) {
+    var arc_start_old = get_arc_start_position(d.theme, d.valence, settings.sex, settings.age, settings.londoner) * 2 * Math.PI;
+    var arc_start_new = get_arc_start_position(d.theme, d.valence, s, a, l) * 2 * Math.PI;
+    var arc_end_old = get_arc_end_position(d.theme, d.valence, settings.sex, settings.age, settings.londoner) * 2 * Math.PI;
+    var arc_end_new = get_arc_end_position(d.theme, d.valence, s, a, l) * 2 * Math.PI;
     if( settings.formation == "merged"){
         arc_start_old = arc_start_old * sizes.large.gap_factor / 5 + ((d.theme-.5)*(2/5)*Math.PI);
         arc_end_old = arc_end_old * sizes.large.gap_factor / 5 + ((d.theme-.5)*(2/5)*Math.PI);
@@ -200,8 +211,8 @@ function group_tween(ring, new_formation) {
 
 // donut imploder/exploder
 function tween_radius(d, direction) {
-    var arc_start = get_arc_start_position(d.theme, d.valence, settings.sex, settings.age);
-    var arc_end = get_arc_end_position(d.theme, d.valence, settings.sex, settings.age);
+    var arc_start = get_arc_start_position(d.theme, d.valence, settings.sex, settings.age, settings.londoner);
+    var arc_end = get_arc_end_position(d.theme, d.valence, settings.sex, settings.age, settings.londoner);
     var implodedS = arc_start * 2 * Math.PI,
         implodedE = arc_end * 2 * Math.PI,
         explodedS = ((d.theme-.5)*(2/5)*Math.PI) + arc_start*sizes.large.gap_factor * (2/5) * Math.PI,
@@ -307,6 +318,24 @@ sexes.map(function(s) {
 });
 $('#sexRadio').buttonset().change(function() { change_sex($('.sexRadio:checked').val()); });
 
+//londoner Controls
+var londonerRadio = controls
+  .append('form')
+    .attr('id', 'londonerRadio');
+londoners.map(function(s) {
+    londonerRadio.append('input')
+        .attr('type', 'radio')
+        .attr('name', 'londonerRadio')
+        .attr('class', 'londonerRadio')
+        .attr('id', s.londoner + 'londonerRadio')
+        .attr('value', s.londoner)
+        .attr(s.londoner == settings.londoner ? 'checked' : 'ignoreMe', 'true');
+    londonerRadio.append('label')
+        .attr('for', s.londoner + 'londonerRadio')
+        .text(s.londonerName);
+});
+$('#londonerRadio').buttonset().change(function() { change_londoner($('.londonerRadio:checked').val()); });
+
 // View controls
 var viewRadio = controls
     .append('form')
@@ -340,7 +369,7 @@ function draw_chords(source_theme, source_valence) {
     
     // loop through the other themes
     var row = (source_theme*valencies.length) + source_valence,
-        d = dataset[get_demographic(settings.sex, settings.age)][row];
+        d = dataset[get_demographic(settings.sex, settings.age, settings.londoner)][row];
     
     themes.map(function(target_theme, target_theme_index) {
         // find total size of the target theme
@@ -353,13 +382,13 @@ function draw_chords(source_theme, source_valence) {
         if (target_theme_index != source_theme) {
             
             // loop through the valences
-            var source_start = ((source_theme-.5)*(2/5)*Math.PI) + get_arc_start_position(source_theme, source_valence, settings.sex, settings.age) * sizes.large.gap_factor * (2/5) * Math.PI,
-                source_end = ((source_theme-.5)*(2/5)*Math.PI) + get_arc_start_position(source_theme, source_valence, settings.sex, settings.age) * sizes.large.gap_factor * (2/5) * Math.PI;
+            var source_start = ((source_theme-.5)*(2/5)*Math.PI) + get_arc_start_position(source_theme, source_valence, settings.sex, settings.age, settings.londoner) * sizes.large.gap_factor * (2/5) * Math.PI,
+                source_end = ((source_theme-.5)*(2/5)*Math.PI) + get_arc_start_position(source_theme, source_valence, settings.sex, settings.age, settings.londoner) * sizes.large.gap_factor * (2/5) * Math.PI;
             valencies.map(function(target_valence, target_valence_index) {
                 // update end angle
-                source_end += sizes.large.gap_factor * ((d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum) * (2/5) * Math.PI * get_proportion(source_theme, source_valence, settings.sex, settings.age));
-                var target_start = get_arc_start_position(target_theme_index, target_valence_index, settings.sex, settings.age) * sizes.large.gap_factor * 2/5 * Math.PI + ((target_theme_index-.5)*(2/5)*Math.PI);
-                var target_end = target_start + (d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum)*get_proportion(source_theme, source_valence, settings.sex, settings.age) * sizes.large.gap_factor * 2/5 * Math.PI;
+                source_end += sizes.large.gap_factor * ((d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum) * (2/5) * Math.PI * get_proportion(source_theme, source_valence, settings.sex, settings.age, settings.londoner));
+                var target_start = get_arc_start_position(target_theme_index, target_valence_index, settings.sex, settings.age, settings.londoner) * sizes.large.gap_factor * 2/5 * Math.PI + ((target_theme_index-.5)*(2/5)*Math.PI);
+                var target_end = target_start + (d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum)*get_proportion(source_theme, source_valence, settings.sex, settings.age, settings.londoner) * sizes.large.gap_factor * 2/5 * Math.PI;
                 
                 // draw the chord
                 chord_group.append('svg:path')
@@ -375,7 +404,7 @@ function draw_chords(source_theme, source_valence) {
                     .attr('class', 'chord_group');
                 
                 // update start angle
-                source_start += (d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum) * (2/5) * Math.PI * get_proportion(source_theme, source_valence, settings.sex, settings.age) * sizes.large.gap_factor;
+                source_start += (d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum) * (2/5) * Math.PI * get_proportion(source_theme, source_valence, settings.sex, settings.age, settings.londoner) * sizes.large.gap_factor;
             });
         }
     });
@@ -452,8 +481,8 @@ d3.json('data.json', function(json) {
     arc = d3.svg.arc()
         .innerRadius(radius*sizes.small.inner)
         .outerRadius(radius*sizes.small.outer)
-        .startAngle(function(d) { return get_arc_start_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI; })
-        .endAngle(function(d) { return get_arc_end_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI; });
+        .startAngle(function(d) { return get_arc_start_position(d.theme, d.valence, settings.sex, settings.age, settings.londoner) * 2 * Math.PI; })
+        .endAngle(function(d) { return get_arc_end_position(d.theme, d.valence, settings.sex, settings.age, settings.londoner) * 2 * Math.PI; });
 
     // add an arc for each response
     arcs = ring_group.selectAll('.arc')

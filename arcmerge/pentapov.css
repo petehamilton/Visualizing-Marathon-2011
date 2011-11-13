@@ -41,7 +41,7 @@ body {
 }
 
 #controllers_container{
-    width: 700px;
+    width: 880px;
     margin: 15px auto 0px auto;
 }
 
@@ -52,20 +52,25 @@ body {
 }
 
 #ageRadio{
-    width: 290px;
-    margin: 5px 10px;
+    width: 230px;
+    margin: 0px 10px;
     float: left;
 }
 
 #sexRadio{
-    width: 160px;
-    margin: 5px 10px;
+    width: 120px;
+    margin: 0px 10px;
     float: left;
 }
 
 #viewRadio{
-    width: 190px;
-    margin: 5px 10px;
+    width: 163px;
+    margin: 0px 10px;
+    float: left;
+}
+#londonerRadio{
+    width: 280px;
+    margin: 0px 10px;
     float: left;
 }
 
@@ -77,5 +82,8 @@ body {
     text-align: center;
     font-family: "georgia";
     font-weight: normal;
-    font-size: 17px;
+    font-size: 14px;
+}
+.ui-button-text-only .ui-button-text {
+    padding: .4em .5em;
 }
