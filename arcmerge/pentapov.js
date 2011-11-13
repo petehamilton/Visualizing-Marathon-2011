@@ -8,12 +8,20 @@ var colors = [
 ];
 
 //Theme names
+// var themes = [
+//     'Personal Well-Being',
+//     'Technology/Economy',
+//     'Emotions',
+//     'Environment',
+//     'Legacy'
+// ]
+
 var themes = [
-    'Personal Well-Being',
+    'Technology/Economy',
+    'Legacy',
     'Environment',
     'Emotions',
-    'Technology/Economy',
-    'Legacy'
+    'Personal Well-Being'
 ]
 
 var valencies = [
@@ -67,11 +75,11 @@ theme_map = [2,4,3,1,0];
 
 // numbers and colors
 var rings = [
-    {ring: theme_map[0], color: 'Blues'}, 
-    {ring: theme_map[1], color: 'YlOrRd'},
-    {ring: theme_map[2], color: 'Greys'},
-    {ring: theme_map[3], color: 'Greens'}, 
-    {ring: theme_map[4], color: 'Reds'}
+    {ring: theme_map[0], color: 'Greys'}, 
+    {ring: theme_map[1], color: 'Reds'},
+    {ring: theme_map[2], color: 'Greens'},
+    {ring: theme_map[3], color: 'YlOrRd'}, 
+    {ring: theme_map[4], color: 'Blues'}
 ];
 
 // Set the ring positions
@@ -283,7 +291,7 @@ d3.json('data.json', function(json) {
     // add the title for each ring
     ring_labels = ring_group
       .append('svg:text')
-        .text(function(d) { return themes[d]; });
+      .text(function(d) { return themes[d]; });
             
     // arc generator
     arc = d3.svg.arc()

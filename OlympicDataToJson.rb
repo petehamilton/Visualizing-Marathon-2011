@@ -230,9 +230,9 @@ class Population
     15.times{matrix << []}
 
     row = 0
-    (1..5).each do |t1n|
+    [4,5,2,3,1].each do |t1n|
       [0, 1, 2].each do |t1v|
-        (1..5).each do |t2n|
+        [4,5,2,3,1].each do |t2n|
           [0, 1, 2].each do |t2v|
             matrix[row] << linkage_matrix_entry(t1n,t1v,t2n,t2v)
           end
