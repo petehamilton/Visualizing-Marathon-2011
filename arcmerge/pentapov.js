@@ -35,6 +35,11 @@ var ages = [
     {'age': 'elderly',  'ageName': '66+'}
 ];
 
+var sizes = {
+    small: {inner: 0.6, outer: 0.8},
+    large: {inner: 0.7, outer: 0.9}
+}
+
 // Initial Values //////////////////////
 
 var settings = {
@@ -76,7 +81,7 @@ var rings = [
 // Set the ring positions
 rings.map(function(d,i) {
     rings[i]['x'] = (theme_map[i] + 1) * radius;
-    rings[i]['y'] = ((theme_map[i] % 2)*1.3 + 1) * radius;
+    rings[i]['y'] = ((theme_map[i] % 2)*1.6 + 1) * radius;
 })
 
 // Functions to simplify things //////////////////////////////////////////
@@ -181,10 +186,11 @@ function tween_radius(d, direction) {
         implodedE = arc_end * 2 * Math.PI,
         explodedS = ((d.theme-.5)*(2/5)*Math.PI) + arc_start * (2/5) * Math.PI,
         explodedE = ((d.theme-.5)*(2/5)*Math.PI) + arc_end * (2/5) * Math.PI,
-        implodedIR = radius * (5/10),
-        implodedOR = radius * (7/10),
-        explodedIR = 3*radius*(8/10),
-        explodedOR = 3*radius*(10/10);
+        implodedIR = radius * sizes.small.inner,
+        implodedOR = radius * sizes.small.outer,
+        explodedIR = 3*radius*sizes.large.inner,
+        explodedOR = 3*radius*sizes.large.outer;
+
     if (direction == 'explode') {
         var iS = d3.interpolate(implodedS, explodedS),
             iE = d3.interpolate(implodedE, explodedE),
@@ -265,7 +271,7 @@ $('#sexRadio').buttonset().css('font-size', 10 + 'px').change(function() { chang
 
 // Chord Generation ////////////////////////////////////////////////////////////
 
-var chord_generator = d3.svg.chord().radius(3*radius*(4/5));
+var chord_generator = d3.svg.chord().radius(3*radius*sizes.large.inner);
 
 // draw chords
 function draw_chords(source_theme, source_valence) {
@@ -346,8 +352,8 @@ d3.json('data.json', function(json) {
             
     // arc generator
     arc = d3.svg.arc()
-        .innerRadius(radius/2)
-        .outerRadius(radius*(7/10))
+        .innerRadius(radius*sizes.small.inner)
+        .outerRadius(radius*sizes.small.outer)
         .startAngle(function(d) { return get_arc_start_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI; })
         .endAngle(function(d) { return get_arc_end_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI; });
 
