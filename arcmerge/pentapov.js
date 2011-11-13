@@ -183,8 +183,8 @@ function tween_radius(d, direction) {
         explodedE = ((d.theme-.5)*(2/5)*Math.PI) + arc_end * (2/5) * Math.PI,
         implodedIR = radius * (5/10),
         implodedOR = radius * (7/10),
-        explodedIR = 3*radius*(4/10),
-        explodedOR = 3*radius*(8/10);
+        explodedIR = 3*radius*(8/10),
+        explodedOR = 3*radius*(10/10);
     if (direction == 'explode') {
         var iS = d3.interpolate(implodedS, explodedS),
             iE = d3.interpolate(implodedE, explodedE),
@@ -263,6 +263,66 @@ sexes.map(function(s) {
 });
 $('#sexRadio').buttonset().css('font-size', 10 + 'px').change(function() { change_sex($('.sexRadio:checked').val()); });
 
+// Chord Generation ////////////////////////////////////////////////////////////
+
+var chord_generator = d3.svg.chord().radius(3*radius*(4/5));
+
+// draw chords
+function draw_chords(source_theme, source_valence) {
+    
+    // add a group for the chords
+    chord_group = chart.append('svg:g')
+        .attr('transform', 'translate(' + (3*radius) + ',' + (3*radius) + ')')
+        .attr('id', 'chord_group_' + source_theme + '_' + source_valence);
+    
+    // loop through the other themes
+    var row = (source_theme*valencies.length) + source_valence,
+        d = dataset[get_demographic(settings.sex, settings.age)][row];
+    
+    themes.map(function(target_theme, target_theme_index) {
+        // find total size of the target theme
+        var theme_sum = 0;
+        valencies.map(function(target_valence, target_valence_index) {
+            theme_sum += d[(target_theme_index*valencies.length) + target_valence_index];
+        });
+        
+        // skip the current theme
+        if (target_theme_index != source_theme) {
+            
+            // loop through the valences
+            var source_start = ((source_theme-.5)*(2/5)*Math.PI) + get_arc_start_position(source_theme, source_valence, settings.sex, settings.age) * (2/5) * Math.PI,
+                source_end = ((source_theme-.5)*(2/5)*Math.PI) + get_arc_start_position(source_theme, source_valence, settings.sex, settings.age) * (2/5) * Math.PI;
+            valencies.map(function(target_valence, target_valence_index) {
+                // update end angle
+                source_end += (d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum) * (2/5) * Math.PI * get_proportion(source_theme, source_valence, settings.sex, settings.age);
+                var target_start = get_arc_start_position(target_theme_index, target_valence_index, settings.sex, settings.age) * 2/5 * Math.PI + ((target_theme_index-.5)*(2/5)*Math.PI),
+                    target_end = target_start + (d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum)*get_proportion(source_theme, source_valence, settings.sex, settings.age) * 2/5 * Math.PI;
+                
+                // draw the chord
+                chord_group.append('svg:path')
+                    .attr('d', chord_generator
+                                .source({startAngle: source_start, endAngle: source_end})
+                                .target({startAngle: target_start, endAngle: target_end})
+                    )
+                    .attr('fill-opacity', .3)
+                    .attr('fill', colorbrewer[rings[target_theme_index].color][4][1+target_valence_index])
+                    .attr('stroke', background)
+                    .attr('stroke-width', 2)
+                    .attr('stroke-opacity', .3);
+                
+                // update start angle
+                source_start += (d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum) * (2/5) * Math.PI * get_proportion(source_theme, source_valence, settings.sex, settings.age);
+                
+            
+            
+            });
+        }
+    });
+    
+    
+    
+}
+
 // Load in Data ////////////////////////////////////////////////////////////////
 
 var dataset;
@@ -301,7 +361,11 @@ d3.json('data.json', function(json) {
         .enter().append('svg:path')
         .attr('d', arc)
         .attr('fill', function(d, i) {
-            return colorbrewer[rings[d.theme].color][4][1+d.valence]; })
+            return colorbrewer[rings[d.theme].color][5][1+d.valence]; })
         .attr('fill-opacity', .5)
-        .attr('stroke', background);
+        .attr('stroke', background)
+        .attr('fill-opacity', 1)
+        .attr('stroke-width', 2)
+        .on('mouseover', function(d) { if (settings.formation == 'merged') draw_chords(d.theme, d.valence)})
+		.on('mouseout', function(d) { if (settings.formation == 'merged') d3.select('#chord_group_' + d.theme + '_' + d.valence).remove(); });
 });
