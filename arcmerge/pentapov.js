@@ -367,5 +367,14 @@ d3.json('data.json', function(json) {
         .attr('fill-opacity', 1)
         .attr('stroke-width', 2)
         .on('mouseover', function(d) { if (settings.formation == 'merged') draw_chords(d.theme, d.valence)})
-		.on('mouseout', function(d) { if (settings.formation == 'merged') d3.select('#chord_group_' + d.theme + '_' + d.valence).remove(); });
+		.on('mouseout', function(d) { if (settings.formation == 'merged' && settings.stored_chord != d.theme + '_' + d.valence) d3.select('#chord_group_' + d.theme + '_' + d.valence).remove(); })
+		.on('click', function(d) {
+		    chord_name = d.theme + '_' + d.valence
+	        d3.select('#chord_group_' + settings.stored_chord).remove();
+		    if (settings.stored_chord == chord_name){
+		        settings.stored_chord = null;
+		    }else{
+		        settings.stored_chord = chord_name;
+		    }
+		});
 });
