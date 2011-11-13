@@ -4,7 +4,7 @@
     width: 1000px;
     margin: 15px auto;
     border-top: 2px solid #eee;
-    padding-top: 10px;
+    padding-top: 20px;
 }
 
 .chord path {
@@ -26,12 +26,29 @@ body {
     margin: 0 auto 30px auto;
 }
 
-#controls{
+#controllers_container{
+    width: 690px;
+    margin: 15px auto 0px auto;
+}
+
+#ageRadio{
     width: 280px;
-    margin: 0 auto;
+    margin: 5px 10px;
+    float: left;
 }
 
 #sexRadio{
     width: 160px;
-    margin: 10px auto 0px auto;
+    margin: 5px 10px;
+    float: left;
+}
+
+#viewRadio{
+    width: 190px;
+    margin: 5px 10px;
+    float: left;
+}
+
+.clear{
+    clear: both;
 }

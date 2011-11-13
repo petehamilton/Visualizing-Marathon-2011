@@ -36,16 +36,19 @@ var ages = [
 ];
 
 var sizes = {
-    small: {inner: 0.6, outer: 0.8, xoffset: 200, x_legoffset: 215, y_legoffset: 205},
-    large: {inner: 0.6, outer: 0.8, xoffset: 0, x_legoffset: 600, y_legoffset: 0, gap_factor: 0.9 }
+    small: {inner: 0.7, outer: 1, xoffset: 110, x_legoffset: 215, y_legoffset: 205},
+    large: {inner: 0.6, outer: 0.9, xoffset: 0, x_legoffset: 600, y_legoffset: 10, gap_factor: 0.85 }
 }
+
+var view_modes = ['Proportions', 'Relationships'];
 
 // Initial Values //////////////////////
 
 var settings = {
     sex: 'both',
     age: 'all',
-    formation: 'logo'
+    formation: 'logo',
+    view_mode: 'Proportions'
 }
 
 // Layout & Page controls //////////////////////////////////////////////////////
@@ -64,6 +67,14 @@ var chart = d3.select('#chart_container')
     .attr('width', chartW)
     .attr('height', chartH);
 
+var logo = chart.append("svg:image") 
+            .attr("xlink:href", "2012_logo.jpeg") 
+            .attr("width", 150) 
+            .attr("height", 150)
+            .attr("x", chartW - 150)
+            .attr("y", chartH - 150)
+            .attr("opacity", 0.4);
+
 // Ring Setup //////////////////////////////////////////////////////////////////
 
 theme_map = [2,4,3,1,0];
@@ -80,8 +91,8 @@ var rings = [
 
 // Set the ring positions
 rings.map(function(d,i) {
-    rings[i]['x'] = (theme_map[i] + 1) * radius + sizes.small.xoffset;
-    rings[i]['y'] = ((theme_map[i] % 2)*1.6 + 1) * radius;
+    rings[i]['x'] = (theme_map[i] + 1) * radius*1.3 + sizes.small.xoffset;
+    rings[i]['y'] = ((theme_map[i] % 2)*1.9 + 1) * radius;
 })
 
 // Functions to simplify things //////////////////////////////////////////
@@ -131,10 +142,10 @@ function arc_tween(d, s, a) {
     var arc_end_old = get_arc_end_position(d.theme, d.valence, settings.sex, settings.age) * 2 * Math.PI;
     var arc_end_new = get_arc_end_position(d.theme, d.valence, s, a) * 2 * Math.PI;
     if( settings.formation == "merged"){
-        arc_start_old = arc_start_old / 5 + ((d.theme-.5)*(2/5)*Math.PI);
-        arc_end_old = arc_end_old / 5 + ((d.theme-.5)*(2/5)*Math.PI);
-        arc_start_new = arc_start_new / 5 + ((d.theme-.5)*(2/5)*Math.PI);
-        arc_end_new = arc_end_new / 5 + ((d.theme-.5)*(2/5)*Math.PI);
+        arc_start_old = arc_start_old * sizes.large.gap_factor / 5 + ((d.theme-.5)*(2/5)*Math.PI);
+        arc_end_old = arc_end_old * sizes.large.gap_factor / 5 + ((d.theme-.5)*(2/5)*Math.PI);
+        arc_start_new = arc_start_new * sizes.large.gap_factor / 5 + ((d.theme-.5)*(2/5)*Math.PI);
+        arc_end_new = arc_end_new * sizes.large.gap_factor / 5 + ((d.theme-.5)*(2/5)*Math.PI);
     }
     var iS = d3.interpolate(arc_start_old , arc_start_new);
     var iE = d3.interpolate(arc_end_old, arc_end_new);
@@ -187,12 +198,12 @@ function group_tween(ring, new_formation) {
 
 // donut imploder/exploder
 function tween_radius(d, direction) {
-    var arc_start = get_arc_start_position(d.theme, d.valence, settings.sex, settings.age)*sizes.large.gap_factor;
-    var arc_end = get_arc_end_position(d.theme, d.valence, settings.sex, settings.age)*sizes.large.gap_factor;
+    var arc_start = get_arc_start_position(d.theme, d.valence, settings.sex, settings.age);
+    var arc_end = get_arc_end_position(d.theme, d.valence, settings.sex, settings.age);
     var implodedS = arc_start * 2 * Math.PI,
         implodedE = arc_end * 2 * Math.PI,
-        explodedS = ((d.theme-.5)*(2/5)*Math.PI) + arc_start * (2/5) * Math.PI,
-        explodedE = ((d.theme-.5)*(2/5)*Math.PI) + arc_end * (2/5) * Math.PI,
+        explodedS = ((d.theme-.5)*(2/5)*Math.PI) + arc_start*sizes.large.gap_factor * (2/5) * Math.PI,
+        explodedE = ((d.theme-.5)*(2/5)*Math.PI) + arc_end*sizes.large.gap_factor * (2/5) * Math.PI,
         implodedIR = radius * sizes.small.inner,
         implodedOR = radius * sizes.small.outer,
         explodedIR = 3*radius*sizes.large.inner,
@@ -294,6 +305,25 @@ sexes.map(function(s) {
 });
 $('#sexRadio').buttonset().css('font-size', 10 + 'px').change(function() { change_sex($('.sexRadio:checked').val()); });
 
+// View controls
+var viewRadio = controls
+    .append('form')
+    .attr('id', 'viewRadio');
+view_modes.map(function(v) {
+    viewRadio.append('input')
+        .attr('type', 'radio')
+        .attr('name', 'viewRadio')
+        .attr('class', 'viewRadio')
+        .attr('id', v + 'viewRadio')
+        .attr('value', v)
+        .attr(v == settings.view_mode ? 'checked' : 'ignoreMe', 'true');
+    viewRadio.append('label')
+        .attr('for', v + 'viewRadio')
+        .text(v);
+});
+$('#viewRadio').buttonset().css('font-size', 10 + 'px').change(function() { toggle_view_mode(); });
+
+
 // Chord Generation ////////////////////////////////////////////////////////////
 
 var chord_generator = d3.svg.chord().radius(3*radius*sizes.large.inner);
@@ -325,9 +355,9 @@ function draw_chords(source_theme, source_valence) {
                 source_end = ((source_theme-.5)*(2/5)*Math.PI) + get_arc_start_position(source_theme, source_valence, settings.sex, settings.age) * sizes.large.gap_factor * (2/5) * Math.PI;
             valencies.map(function(target_valence, target_valence_index) {
                 // update end angle
-                source_end += (d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum) * (2/5) * Math.PI * get_proportion(source_theme, source_valence, settings.sex, settings.age) * sizes.large.gap_factor;
-                var target_start = get_arc_start_position(target_theme_index, target_valence_index, settings.sex, settings.age) * sizes.large.gap_factor * 2/5 * Math.PI + ((target_theme_index-.5)*(2/5)*Math.PI),
-                    target_end = target_start + (d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum)*get_proportion(source_theme, source_valence, settings.sex, settings.age) * sizes.large.gap_factor * 2/5 * Math.PI;
+                source_end += sizes.large.gap_factor * ((d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum) * (2/5) * Math.PI * get_proportion(source_theme, source_valence, settings.sex, settings.age));
+                var target_start = get_arc_start_position(target_theme_index, target_valence_index, settings.sex, settings.age) * sizes.large.gap_factor * 2/5 * Math.PI + ((target_theme_index-.5)*(2/5)*Math.PI);
+                var target_end = target_start + (d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum)*get_proportion(source_theme, source_valence, settings.sex, settings.age) * sizes.large.gap_factor * 2/5 * Math.PI;
                 
                 // draw the chord
                 chord_group.append('svg:path')
@@ -343,7 +373,7 @@ function draw_chords(source_theme, source_valence) {
                     .attr('class', 'chord_group');
                 
                 // update start angle
-                source_start += (d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum) * (2/5) * Math.PI * get_proportion(source_theme, source_valence, settings.sex, settings.age);
+                source_start += (d[(target_theme_index*valencies.length) + target_valence_index] / theme_sum) * (2/5) * Math.PI * get_proportion(source_theme, source_valence, settings.sex, settings.age) * sizes.large.gap_factor;
             });
         }
     });
@@ -437,15 +467,5 @@ d3.json('data.json', function(json) {
         .attr('fill-opacity', 1)
         .attr('stroke-width', 2)
         .on('mouseover', function(d) { if (settings.formation == 'merged') draw_chords(d.theme, d.valence)})
-        .on('mouseout', function(d) { if (settings.formation == 'merged' && settings.stored_chord != d.theme + '_' + d.valence) d3.select('#chord_group_' + d.theme + '_' + d.valence).remove(); })
-        .on('click', function(d) {
-            chord_name = d.theme + '_' + d.valence
-            d3.selectAll('.chord_group').remove();
-            draw_chords(d.theme, d.valence)
-            if (settings.stored_chord == chord_name){
-                settings.stored_chord = null;
-            }else{
-                settings.stored_chord = chord_name;
-            }
-        });
+        .on('mouseout', function(d) { if (settings.formation == 'merged') d3.select('#chord_group_' + d.theme + '_' + d.valence).remove(); })
 });
