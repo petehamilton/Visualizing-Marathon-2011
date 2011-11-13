@@ -36,8 +36,8 @@ var ages = [
 ];
 
 var sizes = {
-    small: {inner: 0.7, outer: 1, xoffset: 110, x_legoffset: 215, y_legoffset: 205},
-    large: {inner: 0.6, outer: 0.9, xoffset: 0, x_legoffset: 600, y_legoffset: 10, gap_factor: 0.85 }
+    small: {inner: 0.6, outer: 1, xoffset: 0, x_legoffset: 215, y_legoffset: 286},
+    large: {inner: 0.6, outer: 0.85, xoffset: 0, x_legoffset: 645, y_legoffset: 15, gap_factor: 0.85 }
 }
 
 var view_modes = ['Proportions', 'Relationships'];
@@ -55,8 +55,8 @@ var settings = {
 
 // various spacing parameters
 var chartW      = 1000;
-var chartH      = 600;
-var radius      = chartW / 10;
+var chartH      = 700;
+var radius      = chartW / 8;
 var background  = 'white';
 
 // main svg for the chart
@@ -91,7 +91,7 @@ var rings = [
 
 // Set the ring positions
 rings.map(function(d,i) {
-    rings[i]['x'] = (theme_map[i] + 1) * radius*1.3 + sizes.small.xoffset;
+    rings[i]['x'] = (theme_map[i] + 1) * radius*1.33 + sizes.small.xoffset;
     rings[i]['y'] = ((theme_map[i] % 2)*1.9 + 1) * radius;
 })
 
@@ -366,7 +366,7 @@ function draw_chords(source_theme, source_valence) {
                                 .target({startAngle: target_start, endAngle: target_end})
                     )
                     .attr('fill-opacity', .3)
-                    .attr('fill', colorbrewer[rings[target_theme_index].color][4][1+target_valence_index])
+                    .attr('fill', colorbrewer[rings[target_theme_index].color][6][2+target_valence_index])
                     .attr('stroke', background)
                     .attr('stroke-width', 2)
                     .attr('stroke-opacity', .3)
@@ -395,7 +395,7 @@ function generate_legend(x,y,w,h){
         .attr('y',function(d){ return y + (Math.floor(d/3)+0.5)*(h+spacing)})
         .attr('height', h + "px")
         .attr('width', w + "px")
-        .attr('fill',function(d){ return colorbrewer[rings[Math.floor(d/3)].color][4][1+(2 - (d % 3))]})
+        .attr('fill',function(d){ return colorbrewer[rings[Math.floor(d/3)].color][6][2+(2 - (d % 3))]})
         .attr('stroke-width', 1)
         .attr('stroke', background)
         .attr('stroke-opacity', 1);
@@ -461,7 +461,7 @@ d3.json('data.json', function(json) {
         .enter().append('svg:path')
         .attr('d', arc)
         .attr('fill', function(d, i) {
-            return colorbrewer[rings[d.theme].color][5][1+d.valence]; })
+            return colorbrewer[rings[d.theme].color][6][1+d.valence]; })
         .attr('fill-opacity', .5)
         .attr('stroke', background)
         .attr('fill-opacity', 1)

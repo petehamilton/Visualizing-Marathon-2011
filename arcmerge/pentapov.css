@@ -1,7 +1,11 @@
 
+#container{
+    width: 1000px;
+    margin: 0 auto;
+}
+
 #chart_container {
     font: 10px sans-serif;
-    width: 1000px;
     margin: 15px auto;
     border-top: 2px solid #eee;
     padding-top: 20px;
@@ -31,6 +35,10 @@ body {
     margin: 15px auto 0px auto;
 }
 
+#controllers_container_container{
+    border-top: 2px solid #eee;
+}
+
 #ageRadio{
     width: 280px;
     margin: 5px 10px;
@@ -51,4 +59,8 @@ body {
 
 .clear{
     clear: both;
+}
+
+#big_question{
+    text-align: center;
 }
