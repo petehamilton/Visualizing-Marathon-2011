@@ -139,7 +139,6 @@ function arc_tween(d, s, a) {
 
 
 function get_formation_translation(ring, formation){
-    console.log("Ring: " + ring + " to " + formation);
     switch(formation){
         case "pentagram":
             //TODO - do clever things with me
