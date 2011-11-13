@@ -501,4 +501,7 @@ d3.json('data.json', function(json) {
         .attr('stroke-width', 2)
         .on('mouseover', function(d) { if (settings.formation == 'merged') draw_chords(d.theme, d.valence)})
         .on('mouseout', function(d) { if (settings.formation == 'merged') d3.select('#chord_group_' + d.theme + '_' + d.valence).remove(); })
+        
+        // begin the tutorial
+        start_tutorial();
 });
