@@ -221,26 +221,27 @@ class Population
   end
   
   def check_linkage(t1n,t1v,t2n,t2v,p)
-    result = p.polarity_for_theme(t1n) != t1v && p.polarity_for_theme(t2n) != t2v
+    result = !(p.polarity_for_theme(t1n) == t1v && p.polarity_for_theme(t2n) == t2v)
+    
+    puts "Polarity t#{t1n}(#{t1v}): #{p.polarity_for_theme(t1n)}, Polarity t#{t2n}(#{t2v}): #{p.polarity_for_theme(t2n)}, Result: #{result}"
     
     if t1n == t2n
       print "Same theme"
       if t1v == t2v
-        puts "And Same Valency"
+        puts " and Same Valency"
         puts result
       else
-        puts result
+        puts " #{result}";
       end
     end
     puts
-    # puts "Polarity t1: #{p.polarity_for_theme(t1n)}, Polarity t2: #{p.polarity_for_theme(t2n)}, Result: #{p.polarity_for_theme(t1n) != t1v && p.polarity_for_theme(t2n) != t2v}"
   end
   
   
   def linkage_matrix_entry(t1n,t1v,t2n,t2v)
     # return 0 if t1n == t2n
     # return (@participants.dup.delete_if {|p| p.polarity_for_theme(t1n) != t1v && p.polarity_for_theme(t2n) != t2v}).length
-    return (@participants.dup.delete_if {|p| check_linkage(t1n,t1v,t2n,t2v,p); return p.polarity_for_theme(t1n) != t1v && p.polarity_for_theme(t2n) != t2v}).length
+    return (@participants.dup.delete_if {|p| !(p.polarity_for_theme(t1n) == t1v && p.polarity_for_theme(t2n) == t2v) }).length
   end
 
   def full_linkage_matrix
@@ -292,8 +293,8 @@ p = Population.new
 index = 0
 CSV.foreach("OlympicFutures_UK_Raw.csv", :quote_char => '"', :col_sep =>',', :row_sep =>:auto) do |row|
   p.participants << CSVEvaluator.eval_row(row)
-  index += 1
-  break if index == 10
+  # index += 1
+  # break if index == 10
 end
 
 #Output Matrix data as json
